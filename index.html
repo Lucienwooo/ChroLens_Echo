@@ -5,29 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>無廣告翻譯</title>
     <style>
+        /* ===== 字型設定 ===== */
         @font-face {
             font-family: 'LINESeedTW';
             src: url('./LINE Seed TW_ver02/TTF/LINESeedTW_TTF_Rg.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
         }
+        /* ===== 主體排版 ===== */
         body {
             font-family: 'LINESeedTW', 'Microsoft JhengHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 20px; max-width: 800px; margin: auto; background-color: #f4f4f4;
+            padding: 12px; max-width: 600px; margin: auto; background-color: #f4f4f4;
         }
-        h1 { text-align: center; color: #333; }
-        .container { background-color: white; padding: 16px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-        textarea { width: 100%; height: 110px; padding: 8px; margin-bottom: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: vertical; }
-        .output-group { display: block; margin-top: 12px; }
-        .output-box { background: #e9ecef; border-radius: 4px; padding: 10px; min-height: 40px; white-space: pre-wrap; margin-bottom: 10px; }
-        .output-title { font-weight: bold; margin-bottom: 2px; }
-        #status-message { color: red; margin-top: 8px; font-size: 0.95em; }
+        h1 { text-align: center; color: #333; margin-bottom: 12px; font-size: 1.4em;}
+        .container { background-color: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); }
+        /* ===== 輸入框區 ===== */
+        textarea {
+            width: 100%; height: 90px; padding: 6px; margin-bottom: 8px;
+            box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: vertical;
+            font-size: 1em;
+        }
+        /* ===== 輸出框區 ===== */
+        .output-group { display: block; margin-top: 8px; }
+        .output-box {
+            background: #f7f7fa;
+            border-radius: 6px;
+            padding: 8px 8px 6px 8px;
+            min-height: 32px;
+            white-space: pre-wrap;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            position: relative;
+        }
+        .output-title {
+            font-weight: bold;
+            font-size: 0.98em;
+            color: #555;
+            margin-bottom: 0px;
+            position: absolute;
+            top: 6px;
+            left: 10px;
+            background: #f7f7fa;
+            padding: 0 4px;
+            border-radius: 3px;
+        }
+        .output-box > div:not(.output-title) {
+            margin-top: 22px;
+            font-size: 1em;
+        }
+        #status-message {
+            color: #d33;
+            margin-top: 6px;
+            font-size: 0.95em;
+            text-align: right;
+        }
     </style>
 </head>
 <body>
+    <!-- ===== 標題區 ===== -->
     <h1>繁體中文、日本語、English</h1>
     <div class="container">
+        <!-- ===== 輸入區 ===== -->
         <textarea id="input-text" placeholder="請輸入要翻譯的內容..." oninput="autoTranslate()"></textarea>
+        <!-- ===== 輸出區 ===== -->
         <div class="output-group">
             <div class="output-box">
                 <div class="output-title" id="output1-title">日文</div>
@@ -38,9 +78,11 @@
                 <div id="output2"></div>
             </div>
         </div>
+        <!-- ===== 狀態訊息區 ===== -->
         <p id="status-message"></p>
     </div>
     <script>
+        // ===== API 設定區 =====
         const API_URLS = [
             "https://script.google.com/macros/s/AKfycbxSUTL_ztpG9JY2bYyZFWvmuzY9Kf6fJneZi1ddsZBO4s7OP8AHvqfBAbLhqTgmN84/exec",
             "https://script.google.com/macros/s/AKfycbzl--LvEA8pWCvwV5oXShC6dsmW4L8MC4KvNm2xmpQlTagP1toabvWfrTizRuuIGHtg/exec",
@@ -52,6 +94,7 @@
         let timer = null;
         let lastInput = "";
 
+        // ===== 輸入偵測區 =====
         function autoTranslate() {
             if (timer) clearTimeout(timer);
             timer = setTimeout(() => {
@@ -62,18 +105,21 @@
             }, 500); // 0.5秒沒動靜就翻譯
         }
 
+        // ===== 語言偵測區 =====
         function detectLang(text) {
-            // 簡易語言偵測：有日文假名就判定日文，有英文字母就判定英文，否則預設中文
+            // 有日文假名就判定日文，有英文字母就判定英文，否則預設中文
             if (/[\u3040-\u30ff]/.test(text)) return "ja";
             if (/[a-zA-Z]/.test(text)) return "en";
             return "zh-tw";
         }
 
+        // ===== Google翻譯備援區 =====
         function openGoogleTranslateFallback(text, sourceLang, targetLang) {
             const googleTranslateUrl = `https://translate.google.com/?sl=${sourceLang}&tl=${targetLang}&text=${encodeURIComponent(text)}&op=translate`;
             window.open(googleTranslateUrl, '_blank');
         }
 
+        // ===== 單一翻譯處理區 =====
         async function translateSingle(text, sourceLang, targetLang, outputId) {
             let attempts = 0;
             let success = false;
@@ -83,7 +129,7 @@
 
             document.getElementById(outputId).innerText = "翻譯中...";
 
-            // 1. Google Apps Script API
+            // Google Apps Script API
             while (attempts < maxAttempts && !success) {
                 const apiUrl = API_URLS[apiIndex];
                 const url = `${apiUrl}?text=${encodeURIComponent(text)}&source=${sourceLang}&target=${targetLang}`;
@@ -105,7 +151,7 @@
                 attempts++;
             }
 
-            // 2. DeepL API
+            // DeepL API
             if (!success) {
                 try {
                     const deeplResult = await translateWithDeepL(text, sourceLang, targetLang);
@@ -120,13 +166,14 @@
                 }
             }
 
-            // 3. Google翻譯網頁
+            // Google翻譯網頁
             document.getElementById(outputId).innerText = "❌ 額度用盡或連線失敗，自動開啟 Google 翻譯。";
             document.getElementById('status-message').innerText =
                 "❌ 額度用盡或連線失敗 (當前使用 Google 翻譯網頁)";
             openGoogleTranslateFallback(text, sourceLang, targetLang);
         }
 
+        // ===== 多語翻譯區 =====
         async function translateMulti() {
             const text = document.getElementById('input-text').value.trim();
             if (text === "" || text === lastInput) return;
@@ -166,6 +213,7 @@
             translateSingle(text, lang, targets[1].lang, targets[1].output);
         }
 
+        // ===== DeepL API區 =====
         async function translateWithDeepL(text, sourceLang, targetLang) {
             const apiKey = "078b54f1-0f39-47e0-9276-04a7335c4696:fx";
             const url = `https://api-free.deepl.com/v2/translate`;
@@ -183,6 +231,7 @@
             return data.translations[0].text;
         }
 
+        // ===== 頁面載入時自動翻譯一次 =====
         window.onload = translateMulti;
     </script>
 </body>
