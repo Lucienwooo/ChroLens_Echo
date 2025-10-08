@@ -5,6 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>翻譯</title>
     <style>
+        /* 引入 LINE Seed TW 字型（Regular） */
+        @font-face {
+            font-family: 'LINESeedTW';
+            src: url('./LINE Seed TW_ver02/TTF/LINESeedTW_TTF_Rg.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        /* 中文用 LINE Seed TW，英文和日文用微軟正黑體 */
+        body {
+            font-family: 'LINESeedTW', 'Microsoft JhengHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        /* 強制中文用 LINESeedTW */
+        :lang(zh), :lang(zh-Hant), :lang(zh-TW) {
+            font-family: 'LINESeedTW', 'Microsoft JhengHei', sans-serif;
+        }
+        /* 英文和日文用微軟正黑體 */
+        :lang(en), :lang(ja) {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
         /* 簡單的響應式 CSS，確保手機和電腦都可用 */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; max-width: 800px; margin: auto; background-color: #f4f4f4; }
         h1 { text-align: center; color: #333; }
@@ -78,15 +97,34 @@
         let timer = null;
 
         function swapLanguages() {
-            // ... (保持原有的語言交換邏輯不變)
+            const source = document.getElementById('source-lang');
+            const target = document.getElementById('target-lang');
+            const tempTargetValue = target.value; 
+
+            if (source.value !== 'auto') {
+                target.value = source.value;
+                source.value = tempTargetValue;
+            } else {
+                source.value = tempTargetValue;
+                target.value = 'auto'; 
+            }
+            translateText();
         }
 
         function autoTranslate() {
-            // ... (保持原有的延遲翻譯邏輯不變)
+            if (timer) {
+                clearTimeout(timer);
+            }
+            timer = setTimeout(translateText, 500); 
+        }
+
+        function openGoogleTranslateFallback(text, sourceLang, targetLang) {
+            const googleTranslateUrl = `https://translate.google.com/?sl=${sourceLang === 'auto' ? 'auto' : sourceLang}&tl=${targetLang}&text=${encodeURIComponent(text)}&op=translate`;
+            window.open(googleTranslateUrl, '_blank');
         }
         
         async function translateText() {
-            // 每次翻譯都先換下一個 API
+            // 每次翻譯都先換下一個 API (確保負載均衡)
             currentApiIndex = (currentApiIndex + 1) % API_URLS.length;
 
             const text = document.getElementById('input-text').value.trim();
@@ -104,54 +142,43 @@
             
             let success = false;
             let attempts = 0;
-            const maxAttempts = API_URLS.length; // 最多嘗試所有 API 一次
+            const maxAttempts = API_URLS.length;
 
-            // --- 核心：嘗試輪替呼叫 API ---
             while (attempts < maxAttempts && !success) {
-                
-                // 1. 取得本次要使用的 API 網址
                 const currentApiUrl = API_URLS[currentApiIndex];
-                
-                // 2. 建構請求網址
                 const url = `${currentApiUrl}?text=${encodeURIComponent(text)}&source=${sourceLang}&target=${targetLang}`;
                 
-                console.log(`嘗試使用 API 索引: ${currentApiIndex}`); // 在瀏覽器控制台查看輪替情況
+                console.log(`嘗試使用 API 索引: ${currentApiIndex}`);
                 
                 try {
                     const response = await fetch(url);
                     const data = await response.json();
 
                     if (data.status === 'success') {
-                        // 成功：顯示結果並結束輪替
                         resultArea.innerText = data.translatedText;
                         statusMessage.innerText = `✅ 翻譯成功 (API 索引: ${currentApiIndex})`;
-                        success = true; // 設置成功標誌
+                        success = true;
                     } else if (data.status === 'limit_exceeded') {
-                        // 額度用盡：跳過這個 API，嘗試下一個
                         resultArea.innerText = `⚠️ API ${currentApiIndex} 額度用盡，自動切換至下一個 API...`;
                         statusMessage.innerText = `錯誤: ${data.message}`;
                     } else {
-                        // 其他錯誤：可能是設定錯誤，也嘗試下一個
                         resultArea.innerText = `❌ API ${currentApiIndex} 發生一般錯誤，嘗試下一個...`;
                         statusMessage.innerText = `錯誤: ${data.message}`;
                     }
 
                 } catch (error) {
-                    // 連線錯誤：網路錯誤或網址錯誤，也嘗試下一個
                     resultArea.innerText = `🌐 API ${currentApiIndex} 連線失敗，嘗試下一個...`;
                     statusMessage.innerText = `網路錯誤: ${error.message}`;
                 }
 
-                // 3. 準備下一次嘗試：移動到下一個 API (輪替機制)
                 currentApiIndex = (currentApiIndex + 1) % API_URLS.length;
                 attempts++;
             }
-            // --- 核心輪替結束 ---
             
             if (!success) {
-                // 所有 API 都嘗試失敗
-                resultArea.innerText = "❌ 所有備用 API 皆無法翻譯或額度已用盡，請明天再試。";
-                statusMessage.innerText = ""; // 清空輪替過程中的錯誤訊息
+                resultArea.innerText = "❌ 免費額度已全部用盡或連線失敗！自動開啟 Google 翻譯備援。";
+                statusMessage.innerText = "請在新視窗/標籤頁中查看翻譯結果。";
+                openGoogleTranslateFallback(text, sourceLang, targetLang);
             }
         }
 
