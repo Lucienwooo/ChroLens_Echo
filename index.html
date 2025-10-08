@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -63,7 +62,13 @@
             "https://script.google.com/macros/s/AKfycbzl--LvEA8pWCvwV5oXShC6dsmW4L8MC4KvNm2xmpQlTagP1toabvWfrTizRuuIGHtg/exec",
             
             //lucienwucloud
-            "https://script.google.com/macros/s/AKfycbwtnn2V-O8MkQ-qvwGBtUwSoQGgGyFkHKFAYgUQg1DTMSVHlj68BgmRl2QbEsTNAekc/exec"
+            "https://script.google.com/macros/s/AKfycbwtnn2V-O8MkQ-qvwGBtUwSoQGgGyFkHKFAYgUQg1DTMSVHlj68BgmRl2QbEsTNAekc/exec",
+
+            //lucienwuuu
+            "https://script.google.com/macros/s/AKfycbzjefXUT5qEe5YvpKZ1Gu-FK4UXyjeGLFGUDED_Mrm0dXEeEyQZifNRBQknlcGhVBfk/exec",
+
+            //lucienwooo
+            "https://script.google.com/macros/s/AKfycbwgcGENGItJiZPKDnmDT4_C0J0duRElp4A82xOm0f1_gXT5gCQJcg6nJLwj_QGwNZcv/exec"
         ]; 
         
         // 用來追蹤目前使用到哪個 API 的索引
@@ -81,6 +86,9 @@
         }
         
         async function translateText() {
+            // 每次翻譯都先換下一個 API
+            currentApiIndex = (currentApiIndex + 1) % API_URLS.length;
+
             const text = document.getElementById('input-text').value.trim();
             const sourceLang = document.getElementById('source-lang').value;
             const targetLang = document.getElementById('target-lang').value;
