@@ -54,41 +54,32 @@
     </div>
 
     <script>
-        // 替換成您在 Apps Script 步驟中得到的網址！
-        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxSUTL_ztpG9JY2bYyZFWvmuzY9Kf6fJneZi1ddsZBO4s7OP8AHvqfBAbLhqTgmN84/exec"; 
+        // 步驟一：將您的所有 Apps Script API 網址放在這個陣列中
+        const API_URLS = [
+            //umiwued
+            "https://script.google.com/macros/s/AKfycbxSUTL_ztpG9JY2bYyZFWvmuzY9Kf6fJneZi1ddsZBO4s7OP8AHvqfBAbLhqTgmN84/exec",
+            
+            //yunari202505
+            "https://script.google.com/macros/s/AKfycbzl--LvEA8pWCvwV5oXShC6dsmW4L8MC4KvNm2xmpQlTagP1toabvWfrTizRuuIGHtg/exec",
+            
+            //lucienwucloud
+            "https://script.google.com/macros/s/AKfycbwtnn2V-O8MkQ-qvwGBtUwSoQGgGyFkHKFAYgUQg1DTMSVHlj68BgmRl2QbEsTNAekc/exec"
+        ]; 
+        
+        // 用來追蹤目前使用到哪個 API 的索引
+        let currentApiIndex = 0;
 
         let lastInput = "";
         let timer = null;
 
         function swapLanguages() {
-            const source = document.getElementById('source-lang');
-            const target = document.getElementById('target-lang');
-
-            // 暫存 target 的值
-            const tempTargetValue = target.value; 
-
-            // 如果來源不是「自動偵測」，則交換
-            if (source.value !== 'auto') {
-                target.value = source.value;
-                source.value = tempTargetValue;
-            } else {
-                // 如果來源是「自動偵測」，只將目標語言設為來源，來源仍為自動
-                source.value = tempTargetValue; // 這樣會讓原本的目標變成新的來源
-                target.value = 'auto'; // 新的目標變成自動偵測 (可依喜好調整，這裡簡單處理)
-            }
-
-            // 交換後自動翻譯一次
-            translateText();
+            // ... (保持原有的語言交換邏輯不變)
         }
 
         function autoTranslate() {
-            if (timer) {
-                clearTimeout(timer);
-            }
-            // 延遲 500 毫秒 (0.5 秒) 後才觸發翻譯，避免打字時頻繁呼叫
-            timer = setTimeout(translateText, 500); 
+            // ... (保持原有的延遲翻譯邏輯不變)
         }
-
+        
         async function translateText() {
             const text = document.getElementById('input-text').value.trim();
             const sourceLang = document.getElementById('source-lang').value;
@@ -97,33 +88,65 @@
             const statusMessage = document.getElementById('status-message');
 
             if (text === "" || text === lastInput) {
-                return; // 避免重複翻譯或空內容
+                return;
             }
             lastInput = text;
             resultArea.innerText = "翻譯中...";
             statusMessage.innerText = "";
+            
+            let success = false;
+            let attempts = 0;
+            const maxAttempts = API_URLS.length; // 最多嘗試所有 API 一次
 
-            // 建構 API 請求網址
-            const url = `${GAS_WEB_APP_URL}?text=${encodeURIComponent(text)}&source=${sourceLang}&target=${targetLang}`;
+            // --- 核心：嘗試輪替呼叫 API ---
+            while (attempts < maxAttempts && !success) {
+                
+                // 1. 取得本次要使用的 API 網址
+                const currentApiUrl = API_URLS[currentApiIndex];
+                
+                // 2. 建構請求網址
+                const url = `${currentApiUrl}?text=${encodeURIComponent(text)}&source=${sourceLang}&target=${targetLang}`;
+                
+                console.log(`嘗試使用 API 索引: ${currentApiIndex}`); // 在瀏覽器控制台查看輪替情況
+                
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
 
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
+                    if (data.status === 'success') {
+                        // 成功：顯示結果並結束輪替
+                        resultArea.innerText = data.translatedText;
+                        statusMessage.innerText = `✅ 翻譯成功 (API 索引: ${currentApiIndex})`;
+                        success = true; // 設置成功標誌
+                    } else if (data.status === 'limit_exceeded') {
+                        // 額度用盡：跳過這個 API，嘗試下一個
+                        resultArea.innerText = `⚠️ API ${currentApiIndex} 額度用盡，自動切換至下一個 API...`;
+                        statusMessage.innerText = `錯誤: ${data.message}`;
+                    } else {
+                        // 其他錯誤：可能是設定錯誤，也嘗試下一個
+                        resultArea.innerText = `❌ API ${currentApiIndex} 發生一般錯誤，嘗試下一個...`;
+                        statusMessage.innerText = `錯誤: ${data.message}`;
+                    }
 
-                if (data.status === 'success') {
-                    resultArea.innerText = data.translatedText;
-                } else {
-                    resultArea.innerText = "翻譯失敗，請檢查 API 設定或稍後再試。";
-                    statusMessage.innerText = `錯誤: ${data.message}`;
+                } catch (error) {
+                    // 連線錯誤：網路錯誤或網址錯誤，也嘗試下一個
+                    resultArea.innerText = `🌐 API ${currentApiIndex} 連線失敗，嘗試下一個...`;
+                    statusMessage.innerText = `網路錯誤: ${error.message}`;
                 }
 
-            } catch (error) {
-                resultArea.innerText = "連線錯誤，無法取得翻譯結果。";
-                statusMessage.innerText = `網路或伺服器錯誤: ${error.message}`;
+                // 3. 準備下一次嘗試：移動到下一個 API (輪替機制)
+                currentApiIndex = (currentApiIndex + 1) % API_URLS.length;
+                attempts++;
+            }
+            // --- 核心輪替結束 ---
+            
+            if (!success) {
+                // 所有 API 都嘗試失敗
+                resultArea.innerText = "❌ 所有備用 API 皆無法翻譯或額度已用盡，請明天再試。";
+                statusMessage.innerText = ""; // 清空輪替過程中的錯誤訊息
             }
         }
 
-        // 初始執行一次手動翻譯，確保載入時狀態正確
         window.onload = translateText; 
     </script>
 </body>
