@@ -116,7 +116,7 @@
 
         function openGoogleTranslateFallback(text, sourceLang, targetLang) {
             const googleTranslateUrl = `https://translate.google.com/?sl=${sourceLang === 'auto' ? 'auto' : sourceLang}&tl=${targetLang}&text=${encodeURIComponent(text)}&op=translate`;
-            window.open(googleTranslateUrl, '_blank');
+            window.location.href = googleTranslateUrl; // 直接跳轉
         }
         
         async function translateText() {
