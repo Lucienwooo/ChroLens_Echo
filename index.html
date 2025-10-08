@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>翻譯</title>
+    <title>繁體中文、日本語、English
     <style>
         @font-face {
             font-family: 'LINESeedTW';
@@ -13,172 +13,173 @@
         }
         body {
             font-family: 'LINESeedTW', 'Microsoft JhengHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px; max-width: 800px; margin: auto; background-color: #f4f4f4;
         }
-        :lang(zh), :lang(zh-Hant), :lang(zh-TW) {
-            font-family: 'LINESeedTW', 'Microsoft JhengHei', sans-serif;
-        }
-        :lang(en), :lang(ja) {
-            font-family: 'Microsoft JhengHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        /* 簡單的響應式 CSS，確保手機和電腦都可用 */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; max-width: 800px; margin: auto; background-color: #f4f4f4; }
         h1 { text-align: center; color: #333; }
         .container { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-        textarea { width: 100%; height: 150px; padding: 10px; margin-bottom: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: vertical; }
-        select { padding: 10px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; }
-        button:hover { background-color: #0056b3; }
-        #result-area { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 4px; min-height: 50px; white-space: pre-wrap; }
-        .controls { display: flex; align-items: center; margin-bottom: 20px; }
-        .controls > * { margin-right: 10px; }
-        #swap-btn { background-color: #6c757d; font-size: 1.2em; line-height: 1; padding: 5px 10px; }
-        .language-group { flex-grow: 1; }
+        textarea { width: 100%; height: 120px; padding: 10px; margin-bottom: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: vertical; }
+        .output-group { display: block; margin-top: 20px; }
+        .output-box { background: #e9ecef; border-radius: 4px; padding: 15px; min-height: 60px; white-space: pre-wrap; margin-bottom: 20px; }
+        .output-title { font-weight: bold; margin-bottom: 8px; }
+        #status-message { color: red; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <h1>自用無廣告翻譯</h1>
+    <h1>繁體中文、日本語、English</h1>
     <div class="container">
-        <div class="language-group">
-            <label for="source-lang">來源語言:</label>
-            <select id="source-lang">
-                <option value="auto">自動偵測</option>
-                <option value="zh-tw" selected>繁體中文</option>
-                <option value="ja">日文</option>
-                <option value="en">英文</option>
-            </select>
-        </div>
-        <textarea id="input-text" placeholder="請輸入要翻譯的句子或短文..." oninput="autoTranslate()"></textarea>
-
-        <div class="controls">
-            <div class="language-group">
-                <label for="target-lang">目標語言:</label>
-                <select id="target-lang">
-                    <option value="zh-tw">繁體中文</option>
-                    <option value="ja" selected>日文</option>
-                    <option value="en">英文</option>
-                </select>
+        <textarea id="input-text" placeholder="請輸入要翻譯的內容..." oninput="autoTranslate()"></textarea>
+        <div class="output-group">
+            <div class="output-box">
+                <div class="output-title" id="output1-title">日文</div>
+                <div id="output1"></div>
             </div>
-            <button id="swap-btn" onclick="swapLanguages()">⇄</button>
-            <button onclick="translateText()">手動翻譯</button>
+            <div class="output-box">
+                <div class="output-title" id="output2-title">英文</div>
+                <div id="output2"></div>
+            </div>
         </div>
-
-        <h2>翻譯結果:</h2>
-        <div id="result-area"></div>
-        <p id="status-message" style="color: red;"></p>
+        <p id="status-message"></p>
     </div>
-
     <script>
-        // 步驟一：將您的所有 Apps Script API 網址放在這個陣列中
         const API_URLS = [
-            //umiwued
             "https://script.google.com/macros/s/AKfycbxSUTL_ztpG9JY2bYyZFWvmuzY9Kf6fJneZi1ddsZBO4s7OP8AHvqfBAbLhqTgmN84/exec",
-            
-            //yunari202505
             "https://script.google.com/macros/s/AKfycbzl--LvEA8pWCvwV5oXShC6dsmW4L8MC4KvNm2xmpQlTagP1toabvWfrTizRuuIGHtg/exec",
-            
-            //lucienwucloud
             "https://script.google.com/macros/s/AKfycbwtnn2V-O8MkQ-qvwGBtUwSoQGgGyFkHKFAYgUQg1DTMSVHlj68BgmRl2QbEsTNAekc/exec",
-
-            //lucienwuuu
             "https://script.google.com/macros/s/AKfycbzjefXUT5qEe5YvpKZ1Gu-FK4UXyjeGLFGUDED_Mrm0dXEeEyQZifNRBQknlcGhVBfk/exec",
-
-            //lucienwooo
             "https://script.google.com/macros/s/AKfycbwgcGENGItJiZPKDnmDT4_C0J0duRElp4A82xOm0f1_gXT5gCQJcg6nJLwj_QGwNZcv/exec"
-        ]; 
-        
-        // 用來追蹤目前使用到哪個 API 的索引
+        ];
         let currentApiIndex = 0;
-
-        let lastInput = "";
         let timer = null;
-
-        function swapLanguages() {
-            const source = document.getElementById('source-lang');
-            const target = document.getElementById('target-lang');
-            const tempTargetValue = target.value; 
-
-            if (source.value !== 'auto') {
-                target.value = source.value;
-                source.value = tempTargetValue;
-            } else {
-                source.value = tempTargetValue;
-                target.value = 'auto'; 
-            }
-            translateText();
-        }
+        let lastInput = "";
 
         function autoTranslate() {
-            if (timer) {
-                clearTimeout(timer);
-            }
-            timer = setTimeout(translateText, 500); 
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(() => {
+                const text = document.getElementById('input-text').value.trim();
+                if (text !== "" && text !== lastInput) {
+                    translateMulti();
+                }
+            }, 500); // 0.5秒沒動靜就翻譯
+        }
+
+        function detectLang(text) {
+            // 簡易語言偵測：有日文假名就判定日文，有英文字母就判定英文，否則預設中文
+            if (/[\u3040-\u30ff]/.test(text)) return "ja";
+            if (/[a-zA-Z]/.test(text)) return "en";
+            return "zh-tw";
         }
 
         function openGoogleTranslateFallback(text, sourceLang, targetLang) {
-            const googleTranslateUrl = `https://translate.google.com/?sl=${sourceLang === 'auto' ? 'auto' : sourceLang}&tl=${targetLang}&text=${encodeURIComponent(text)}&op=translate`;
-            window.location.href = googleTranslateUrl; // 直接跳轉
+            const googleTranslateUrl = `https://translate.google.com/?sl=${sourceLang}&tl=${targetLang}&text=${encodeURIComponent(text)}&op=translate`;
+            window.open(googleTranslateUrl, '_blank');
         }
-        
-        async function translateText() {
-            // 每次翻譯都先換下一個 API (確保負載均衡)
-            currentApiIndex = (currentApiIndex + 1) % API_URLS.length;
 
-            const text = document.getElementById('input-text').value.trim();
-            const sourceLang = document.getElementById('source-lang').value;
-            const targetLang = document.getElementById('target-lang').value;
-            const resultArea = document.getElementById('result-area');
-            const statusMessage = document.getElementById('status-message');
-
-            if (text === "" || text === lastInput) {
-                return;
-            }
-            lastInput = text;
-            resultArea.innerText = "翻譯中...";
-            statusMessage.innerText = "";
-            
-            let success = false;
+        async function translateSingle(text, sourceLang, targetLang, outputId) {
             let attempts = 0;
+            let success = false;
             const maxAttempts = API_URLS.length;
+            const startTime = performance.now();
+            let apiIndex = currentApiIndex;
 
+            document.getElementById(outputId).innerText = "翻譯中...";
+
+            // 1. Google Apps Script API
             while (attempts < maxAttempts && !success) {
-                const currentApiUrl = API_URLS[currentApiIndex];
-                const url = `${currentApiUrl}?text=${encodeURIComponent(text)}&source=${sourceLang}&target=${targetLang}`;
-                
-                console.log(`嘗試使用 API 索引: ${currentApiIndex}`);
-                
+                const apiUrl = API_URLS[apiIndex];
+                const url = `${apiUrl}?text=${encodeURIComponent(text)}&source=${sourceLang}&target=${targetLang}`;
                 try {
                     const response = await fetch(url);
                     const data = await response.json();
-
                     if (data.status === 'success') {
-                        resultArea.innerText = data.translatedText;
-                        statusMessage.innerText = `✅ 翻譯成功 (API 索引: ${currentApiIndex})`;
+                        const endTime = performance.now();
+                        const elapsed = ((endTime - startTime) / 1000).toFixed(2);
+                        document.getElementById(outputId).innerText = data.translatedText;
+                        document.getElementById('status-message').innerText = `花費 ${elapsed} 秒，✅ 翻譯成功`;
                         success = true;
-                    } else if (data.status === 'limit_exceeded') {
-                        resultArea.innerText = `⚠️ API ${currentApiIndex} 額度用盡，自動切換至下一個 API...`;
-                        statusMessage.innerText = `錯誤: ${data.message}`;
-                    } else {
-                        resultArea.innerText = `❌ API ${currentApiIndex} 發生一般錯誤，嘗試下一個...`;
-                        statusMessage.innerText = `錯誤: ${data.message}`;
+                        currentApiIndex = (apiIndex + 1) % API_URLS.length;
+                        return;
                     }
-
-                } catch (error) {
-                    resultArea.innerText = `🌐 API ${currentApiIndex} 連線失敗，嘗試下一個...`;
-                    statusMessage.innerText = `網路錯誤: ${error.message}`;
-                }
-
-                currentApiIndex = (currentApiIndex + 1) % API_URLS.length;
+                } catch (e) {}
+                apiIndex = (apiIndex + 1) % API_URLS.length;
                 attempts++;
             }
-            
+
+            // 2. DeepL API
             if (!success) {
-                resultArea.innerText = "❌ 免費額度已全部用盡或連線失敗！自動開啟 Google 翻譯備援。";
-                statusMessage.innerText = "請在新視窗/標籤頁中查看翻譯結果。";
-                openGoogleTranslateFallback(text, sourceLang, targetLang);
+                try {
+                    const deeplResult = await translateWithDeepL(text, sourceLang, targetLang);
+                    const endTime = performance.now();
+                    const elapsed = ((endTime - startTime) / 1000).toFixed(2);
+                    document.getElementById(outputId).innerText = deeplResult;
+                    document.getElementById('status-message').innerText = `花費 ${elapsed} 秒，✅ DeepL翻譯成功`;
+                    return;
+                } catch (e) {
+                    // DeepL失敗則進入Google翻譯網頁
+                }
             }
+
+            // 3. Google翻譯網頁
+            document.getElementById(outputId).innerText = "❌ 額度用盡或連線失敗，自動開啟 Google 翻譯。";
+            openGoogleTranslateFallback(text, sourceLang, targetLang);
         }
 
-        window.onload = translateText; 
+        async function translateMulti() {
+            const text = document.getElementById('input-text').value.trim();
+            if (text === "" || text === lastInput) return;
+            lastInput = text;
+            document.getElementById('status-message').innerText = "";
+
+            const lang = detectLang(text);
+
+            // 根據輸入語言決定目標語言與標題
+            let targets = [];
+            if (lang === "zh-tw") {
+                targets = [
+                    {lang: "ja", title: "日文", output: "output1"},
+                    {lang: "en", title: "英文", output: "output2"}
+                ];
+            } else if (lang === "ja") {
+                targets = [
+                    {lang: "zh-tw", title: "中文", output: "output1"},
+                    {lang: "en", title: "英文", output: "output2"}
+                ];
+            } else if (lang === "en") {
+                targets = [
+                    {lang: "zh-tw", title: "中文", output: "output1"},
+                    {lang: "ja", title: "日文", output: "output2"}
+                ];
+            } else {
+                targets = [
+                    {lang: "ja", title: "日文", output: "output1"},
+                    {lang: "en", title: "英文", output: "output2"}
+                ];
+            }
+            document.getElementById('output1-title').innerText = targets[0].title;
+            document.getElementById('output2-title').innerText = targets[1].title;
+
+            // 並行翻譯
+            translateSingle(text, lang, targets[0].lang, targets[0].output);
+            translateSingle(text, lang, targets[1].lang, targets[1].output);
+        }
+
+        async function translateWithDeepL(text, sourceLang, targetLang) {
+            const apiKey = "YOUR_DEEPL_API_KEY";
+            const url = `https://api-free.deepl.com/v2/translate`;
+            const params = new URLSearchParams({
+                auth_key: apiKey,
+                text: text,
+                source_lang: sourceLang.toUpperCase(),
+                target_lang: targetLang.toUpperCase()
+            });
+            const response = await fetch(url, {
+                method: "POST",
+                body: params
+            });
+            const data = await response.json();
+            return data.translations[0].text;
+        }
+
+        window.onload = translateMulti;
     </script>
 </body>
 </html>
