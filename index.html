@@ -5,22 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>翻譯</title>
     <style>
-        /* 引入 LINE Seed TW 字型（Regular） */
         @font-face {
             font-family: 'LINESeedTW';
             src: url('./LINE Seed TW_ver02/TTF/LINESeedTW_TTF_Rg.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
         }
-        /* 中文用 LINE Seed TW，英文和日文用微軟正黑體 */
         body {
             font-family: 'LINESeedTW', 'Microsoft JhengHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        /* 強制中文用 LINESeedTW */
         :lang(zh), :lang(zh-Hant), :lang(zh-TW) {
             font-family: 'LINESeedTW', 'Microsoft JhengHei', sans-serif;
         }
-        /* 英文和日文用微軟正黑體 */
         :lang(en), :lang(ja) {
             font-family: 'Microsoft JhengHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
