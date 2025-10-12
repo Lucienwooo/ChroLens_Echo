@@ -80,6 +80,19 @@
         </div>
         <!-- ===== 狀態訊息區 ===== -->
         <p id="status-message"></p>
+        <!-- ===== 統計資訊與按鈕區 ===== -->
+        <div id="stats-section" style="margin-top:16px;">
+            <div id="stats-info" style="background:#f7f7fa;border-radius:6px;padding:8px 8px 6px 8px;margin-bottom:8px;">
+                <strong>統計資訊</strong><br>
+                今日翻譯次數：<span id="translate-count">0</span><br>
+                今日訪問次數（不重複IP）：<span id="visit-count">0</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button onclick="showStats()">統計資訊</button>
+                <button onclick="showOther()">其他</button>
+                <button onclick="showSettings()">設定</button>
+            </div>
+        </div>
     </div>
     <script>
         // ===== API 設定區 =====
@@ -93,6 +106,43 @@
         let currentApiIndex = 0;
         let timer = null;
         let lastInput = "";
+        // ===== 統計資料 =====
+        let translateCount = 0;
+        let visitCount = 0;
+        // 嘗試從 localStorage 取得今日資料
+        function getTodayKey() {
+            const today = new Date();
+            return today.getFullYear() + '-' + (today.getMonth()+1) + '-' + today.getDate();
+        }
+        function loadStats() {
+            const key = getTodayKey();
+            translateCount = parseInt(localStorage.getItem('translateCount_' + key) || '0');
+            visitCount = parseInt(localStorage.getItem('visitCount_' + key) || '0');
+            document.getElementById('translate-count').innerText = translateCount;
+            document.getElementById('visit-count').innerText = visitCount;
+        }
+        function incTranslateCount() {
+            const key = getTodayKey();
+            translateCount++;
+            localStorage.setItem('translateCount_' + key, translateCount);
+            document.getElementById('translate-count').innerText = translateCount;
+        }
+        function incVisitCount() {
+            const key = getTodayKey();
+            visitCount++;
+            localStorage.setItem('visitCount_' + key, visitCount);
+            document.getElementById('visit-count').innerText = visitCount;
+        }
+        // ===== 按鈕功能區 =====
+        function showStats() {
+            alert('今日翻譯次數：' + translateCount + '\n今日訪問次數（不重複IP）：' + visitCount);
+        }
+        function showOther() {
+            alert('其他功能暫未開放');
+        }
+        function showSettings() {
+            alert('設定功能暫未開放');
+        }
 
         // ===== 輸入偵測區 =====
         function autoTranslate() {
@@ -144,6 +194,7 @@
                             `花費 ${elapsed} 秒，✅翻譯成功 (當前使用 Google Script API)`;
                         success = true;
                         currentApiIndex = (apiIndex + 1) % API_URLS.length;
+                        incTranslateCount();
                         return;
                     }
                 } catch (e) {}
@@ -160,6 +211,7 @@
                     document.getElementById(outputId).innerText = deeplResult;
                     document.getElementById('status-message').innerText =
                         `花費 ${elapsed} 秒，✅翻譯成功 (當前使用 DeepL API)`;
+                    incTranslateCount();
                     return;
                 } catch (e) {
                     // DeepL失敗則進入Google翻譯網頁
@@ -171,6 +223,7 @@
             document.getElementById('status-message').innerText =
                 "❌ 額度用盡或連線失敗 (當前使用 Google 翻譯網頁)";
             openGoogleTranslateFallback(text, sourceLang, targetLang);
+            incTranslateCount();
         }
 
         // ===== 多語翻譯區 =====
@@ -232,7 +285,17 @@
         }
 
         // ===== 頁面載入時自動翻譯一次 =====
-        window.onload = translateMulti;
+        // 頁面載入時統計訪問
+        window.onload = function() {
+            // 統計訪問次數（僅本機，不重複IP僅限本地測試）
+            const key = getTodayKey();
+            if (!localStorage.getItem('visitCount_' + key)) {
+                incVisitCount();
+            } else {
+                loadStats();
+            }
+            translateMulti();
+        };
     </script>
 </body>
 </html>
