@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="umi_去背.ico">
     <title>無廣告翻譯</title>
     <style>
         /* ===== 字型設定 ===== */
@@ -138,7 +139,7 @@
         <textarea id="input-text" placeholder="請輸入要翻譯的內容..." oninput="autoTranslate()"></textarea>
         <!-- ===== 輸出語言選擇區 ===== -->
         <div id="output-lang-select" style="margin-bottom:8px;">
-            <label>
+            <label style="margin-left:16px;">
                 <input type="checkbox" id="chk-ja" checked onchange="updateOutputVisibility()">
                 日本語
             </label>
@@ -146,16 +147,24 @@
                 <input type="checkbox" id="chk-en" onchange="updateOutputVisibility()">
                 English
             </label>
+            <label>
+                <input type="checkbox" id="chk-tw" onchange="updateOutputVisibility()">
+                繁體中文
+            </label>
         </div>
         <!-- ===== 輸出區 ===== -->
         <div class="output-group">
-            <div class="output-box" id="output1-box">
-                <div class="output-title" id="output1-title">日文</div>
-                <div id="output1"></div>
+            <div class="output-box" id="output-tw-box">
+                <div class="output-title" id="output-tw-title">TW</div>
+                <div id="output-tw"></div>
             </div>
-            <div class="output-box" id="output2-box">
-                <div class="output-title" id="output2-title">英文</div>
-                <div id="output2"></div>
+            <div class="output-box" id="output-ja-box">
+                <div class="output-title" id="output-ja-title">JP</div>
+                <div id="output-ja"></div>
+            </div>
+            <div class="output-box" id="output-en-box">
+                <div class="output-title" id="output-en-title">EN</div>
+                <div id="output-en"></div>
             </div>
         </div>
         <!-- ===== 狀態訊息區 ===== -->
@@ -182,7 +191,7 @@
                 </div>
                 <!-- 關於按鈕，靠右顯示 -->
                 <a href="https://linktr.ee/lucienwooo" target="_blank" style="text-decoration:none;">
-                    <button style="min-width:60px;">關於</button>
+                    <img src="umi_去背.ico" alt="關於" style="width:60px;height:32px;object-fit:contain;border-radius:6px;vertical-align:middle;">
                 </a>
             </div>
             <!-- 統計資訊視窗，預設隱藏 -->
@@ -351,35 +360,44 @@
 
             const lang = detectLang(text);
 
-            // 根據輸入語言決定目標語言與標題
-            let targets = [];
-            if (lang === "zh-tw") {
-                targets = [
-                    {lang: "ja", title: "日文", output: "output1"},
-                    {lang: "en", title: "英文", output: "output2"}
-                ];
-            } else if (lang === "ja") {
-                targets = [
-                    {lang: "zh-tw", title: "中文", output: "output1"},
-                    {lang: "en", title: "英文", output: "output2"}
-                ];
-            } else if (lang === "en") {
-                targets = [
-                    {lang: "zh-tw", title: "中文", output: "output1"},
-                    {lang: "ja", title: "日文", output: "output2"}
-                ];
-            } else {
-                targets = [
-                    {lang: "ja", title: "日文", output: "output1"},
-                    {lang: "en", title: "英文", output: "output2"}
-                ];
-            }
-            document.getElementById('output1-title').innerText = targets[0].title;
-            document.getElementById('output2-title').innerText = targets[1].title;
+            // 取得勾選狀態
+            const tw = document.getElementById('chk-tw').checked;
+            const ja = document.getElementById('chk-ja').checked;
+            const en = document.getElementById('chk-en').checked;
 
-            // 並行翻譯
-            translateSingle(text, lang, targets[0].lang, targets[0].output);
-            translateSingle(text, lang, targets[1].lang, targets[1].output);
+            // 輸出框標題固定
+            document.getElementById('output-tw-title').innerText = "TW";
+            document.getElementById('output-ja-title').innerText = "JP";
+            document.getElementById('output-en-title').innerText = "EN";
+
+            // 根據輸入語言與勾選狀態決定翻譯目標
+            // 輸入中文時，翻譯成日文/英文
+            if (lang === "zh-tw") {
+                if (ja) translateSingle(text, "zh-tw", "ja", "output-ja");
+                if (en) translateSingle(text, "zh-tw", "en", "output-en");
+                // 中文不翻譯成中文
+                if (tw) document.getElementById('output-tw').innerText = "（請輸入日文或英文才會翻譯成繁體中文）";
+            }
+            // 輸入日文時，翻譯成繁體中文/英文
+            else if (lang === "ja") {
+                if (tw) translateSingle(text, "ja", "zh-tw", "output-tw");
+                if (en) translateSingle(text, "ja", "en", "output-en");
+                // 日文不翻譯成日文
+                if (ja) document.getElementById('output-ja').innerText = "（請輸入中文或英文才會翻譯成日文）";
+            }
+            // 輸入英文時，翻譯成繁體中文/日文
+            else if (lang === "en") {
+                if (tw) translateSingle(text, "en", "zh-tw", "output-tw");
+                if (ja) translateSingle(text, "en", "ja", "output-ja");
+                // 英文不翻譯成英文
+                if (en) document.getElementById('output-en').innerText = "（請輸入中文或日文才會翻譯成英文）";
+            }
+            // 其它語言，預設翻譯成日文/英文
+            else {
+                if (ja) translateSingle(text, lang, "ja", "output-ja");
+                if (en) translateSingle(text, lang, "en", "output-en");
+                if (tw) document.getElementById('output-tw').innerText = "（請輸入日文或英文才會翻譯成繁體中文）";
+            }
         }
 
         // ===== DeepL API區 =====
@@ -402,18 +420,41 @@
 
         // ===== 輸出語言勾選框控制區 =====
         function updateOutputVisibility() {
-            const ja = document.getElementById('chk-ja').checked;
-            const en = document.getElementById('chk-en').checked;
+            const boxes = [
+                document.getElementById('chk-ja'),
+                document.getElementById('chk-en'),
+                document.getElementById('chk-tw')
+            ];
 
-            // 至少要選一個
-            if (!ja && !en) {
-                // 若都沒選，預設回復日文
-                document.getElementById('chk-ja').checked = true;
-                return updateOutputVisibility();
+            // 記錄勾選順序
+            if (!window.checkedOrder) window.checkedOrder = [];
+            // 先清理 checkedOrder 中已取消勾選的項目
+            window.checkedOrder = window.checkedOrder.filter(id => document.getElementById(id).checked);
+
+            // 檢查目前操作
+            for (let box of boxes) {
+                if (box.checked && !window.checkedOrder.includes(box.id)) {
+                    window.checkedOrder.push(box.id);
+                }
             }
 
-            document.getElementById('output1-box').style.display = ja ? 'block' : 'none';
-            document.getElementById('output2-box').style.display = en ? 'block' : 'none';
+            // 最少要選1個
+            const checkedCount = window.checkedOrder.length;
+            if (checkedCount === 0) {
+                boxes[0].checked = true; // 預設日本語
+                window.checkedOrder = [boxes[0].id];
+            }
+            // 最多只能選2個
+            if (checkedCount > 2) {
+                // 取消最早勾選的那一個
+                const firstId = window.checkedOrder.shift();
+                document.getElementById(firstId).checked = false;
+            }
+
+            // 顯示/隱藏輸出框
+            document.getElementById('output-ja-box').style.display = boxes[0].checked ? 'block' : 'none';
+            document.getElementById('output-en-box').style.display = boxes[1].checked ? 'block' : 'none';
+            document.getElementById('output-tw-box').style.display = boxes[2].checked ? 'block' : 'none';
         }
 
         // ===== 主題切換區 =====
