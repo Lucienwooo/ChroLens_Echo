@@ -59,6 +59,75 @@
             font-size: 0.95em;
             text-align: right;
         }
+        /* ===== 深色主題 ===== */
+        body.dark {
+            background-color: #181a20;
+            color: #e2e2e2;
+        }
+        body.dark .container {
+            background-color: #23252b;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+        }
+        body.dark textarea {
+            background: #23252b;
+            color: #e2e2e2;
+            border-color: #444;
+        }
+        body.dark .output-box {
+            background: #23252b;
+            color: #e2e2e2;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+        }
+        body.dark .output-title {
+            background: #23252b;
+            color: #e2e2e2;
+        }
+        body.dark #stats-info,
+        body.dark #other-info,
+        body.dark #settings-info {
+            background: #23252b;
+            color: #e2e2e2;
+        }
+        body.dark label {
+            color: #e2e2e2;
+        }
+        body.dark button {
+            background: #23252b;
+            color: #e2e2e2;
+            border: 1px solid #444;
+        }
+        body.dark #status-message {
+            color: #ffb3b3;
+        }
+        /* ===== 配色切換器 ===== */
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            margin-left: 10px;
+            vertical-align: middle;
+            user-select: none;
+        }
+        .theme-toggle svg {
+            width: 24px;
+            height: 24px;
+            transition: opacity 0.2s;
+        }
+        .theme-toggle .sun {
+            opacity: 0;
+        }
+        body.light .theme-toggle .sun {
+            opacity: 1;
+        }
+        body.light .theme-toggle .moon {
+            opacity: 0;
+        }
+        body.dark .theme-toggle .moon {
+            opacity: 1;
+        }
+        body.dark .theme-toggle .sun {
+            opacity: 0;
+        }
     </style>
 </head>
 <body>
@@ -67,13 +136,24 @@
     <div class="container">
         <!-- ===== 輸入區 ===== -->
         <textarea id="input-text" placeholder="請輸入要翻譯的內容..." oninput="autoTranslate()"></textarea>
+        <!-- ===== 輸出語言選擇區 ===== -->
+        <div id="output-lang-select" style="margin-bottom:8px;">
+            <label>
+                <input type="checkbox" id="chk-ja" checked onchange="updateOutputVisibility()">
+                日本語
+            </label>
+            <label style="margin-left:16px;">
+                <input type="checkbox" id="chk-en" onchange="updateOutputVisibility()">
+                English
+            </label>
+        </div>
         <!-- ===== 輸出區 ===== -->
         <div class="output-group">
-            <div class="output-box">
+            <div class="output-box" id="output1-box">
                 <div class="output-title" id="output1-title">日文</div>
                 <div id="output1"></div>
             </div>
-            <div class="output-box">
+            <div class="output-box" id="output2-box">
                 <div class="output-title" id="output2-title">英文</div>
                 <div id="output2"></div>
             </div>
@@ -82,10 +162,28 @@
         <p id="status-message"></p>
         <!-- ===== 統計資訊與按鈕區 ===== -->
         <div id="stats-section" style="margin-top:16px;">
-            <div style="display:flex;gap:8px;">
-                <button onclick="toggleStats()">統計資訊</button>
-                <button onclick="toggleOther()">其他</button>
-                <button onclick="toggleSettings()">設定</button>
+            <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;">
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button onclick="toggleStats()">統計資訊</button>
+                    <button onclick="toggleOther()">其他</button>
+                    <button onclick="toggleSettings()">設定</button>
+                    <!-- ===== 配色切換器 ===== -->
+                    <span class="theme-toggle" onclick="toggleTheme()" title="切換配色">
+                        <!-- 月亮 SVG（深色） -->
+                        <svg class="moon" viewBox="0 0 24 24" fill="none">
+                            <path d="M21 12.79A9 9 0 0 1 12.21 3a7 7 0 1 0 8.79 9.79Z" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <!-- 太陽 SVG（淺色） -->
+                        <svg class="sun" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="5" stroke="#FFD700" stroke-width="2"/>
+                            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <!-- 關於按鈕，靠右顯示 -->
+                <a href="https://linktr.ee/lucienwooo" target="_blank" style="text-decoration:none;">
+                    <button style="min-width:60px;">關於</button>
+                </a>
             </div>
             <!-- 統計資訊視窗，預設隱藏 -->
             <div id="stats-info" style="display:none;background:#f7f7fa;border-radius:6px;padding:8px 8px 6px 8px;margin-bottom:8px;">
@@ -302,7 +400,43 @@
             return data.translations[0].text;
         }
 
-        // ===== 頁面載入時自動翻譯一次 =====
+        // ===== 輸出語言勾選框控制區 =====
+        function updateOutputVisibility() {
+            const ja = document.getElementById('chk-ja').checked;
+            const en = document.getElementById('chk-en').checked;
+
+            // 至少要選一個
+            if (!ja && !en) {
+                // 若都沒選，預設回復日文
+                document.getElementById('chk-ja').checked = true;
+                return updateOutputVisibility();
+            }
+
+            document.getElementById('output1-box').style.display = ja ? 'block' : 'none';
+            document.getElementById('output2-box').style.display = en ? 'block' : 'none';
+        }
+
+        // ===== 主題切換區 =====
+        function setTheme(theme) {
+            document.body.classList.remove('light', 'dark');
+            document.body.classList.add(theme);
+            localStorage.setItem('theme', theme);
+        }
+        function toggleTheme() {
+            if (document.body.classList.contains('dark')) {
+                setTheme('light');
+            } else {
+                setTheme('dark');
+            }
+        }
+        // 頁面載入時設置主題（預設深色）
+        (function() {
+            let theme = localStorage.getItem('theme');
+            if (!theme) theme = 'dark';
+            setTheme(theme);
+        })();
+
+        // 頁面載入時自動翻譯一次
         // 頁面載入時統計訪問
         window.onload = function() {
             // 統計訪問次數（僅本機，不重複IP僅限本地測試）
@@ -313,6 +447,7 @@
                 loadStats();
             }
             translateMulti();
+            updateOutputVisibility();
         };
     </script>
 </body>
