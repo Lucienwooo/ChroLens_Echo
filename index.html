@@ -82,15 +82,24 @@
         <p id="status-message"></p>
         <!-- ===== 統計資訊與按鈕區 ===== -->
         <div id="stats-section" style="margin-top:16px;">
-            <div id="stats-info" style="background:#f7f7fa;border-radius:6px;padding:8px 8px 6px 8px;margin-bottom:8px;">
+            <div style="display:flex;gap:8px;">
+                <button onclick="toggleStats()">統計資訊</button>
+                <button onclick="toggleOther()">其他</button>
+                <button onclick="toggleSettings()">設定</button>
+            </div>
+            <!-- 統計資訊視窗，預設隱藏 -->
+            <div id="stats-info" style="display:none;background:#f7f7fa;border-radius:6px;padding:8px 8px 6px 8px;margin-bottom:8px;">
                 <strong>統計資訊</strong><br>
                 今日翻譯次數：<span id="translate-count">0</span><br>
                 今日訪問次數（不重複IP）：<span id="visit-count">0</span>
             </div>
-            <div style="display:flex;gap:8px;">
-                <button onclick="showStats()">統計資訊</button>
-                <button onclick="showOther()">其他</button>
-                <button onclick="showSettings()">設定</button>
+            <!-- 其它視窗，預設隱藏 -->
+            <div id="other-info" style="display:none;background:#f7f7fa;border-radius:6px;padding:8px 8px 6px 8px;margin-bottom:8px;">
+                <strong>其他功能暫未開放</strong>
+            </div>
+            <!-- 設定視窗，預設隱藏 -->
+            <div id="settings-info" style="display:none;background:#f7f7fa;border-radius:6px;padding:8px 8px 6px 8px;margin-bottom:8px;">
+                <strong>設定功能暫未開放</strong>
             </div>
         </div>
     </div>
@@ -134,14 +143,23 @@
             document.getElementById('visit-count').innerText = visitCount;
         }
         // ===== 按鈕功能區 =====
-        function showStats() {
-            alert('今日翻譯次數：' + translateCount + '\n今日訪問次數（不重複IP）：' + visitCount);
+        function toggleStats() {
+            document.getElementById('stats-info').style.display =
+                document.getElementById('stats-info').style.display === 'none' ? 'block' : 'none';
+            document.getElementById('other-info').style.display = 'none';
+            document.getElementById('settings-info').style.display = 'none';
         }
-        function showOther() {
-            alert('其他功能暫未開放');
+        function toggleOther() {
+            document.getElementById('other-info').style.display =
+                document.getElementById('other-info').style.display === 'none' ? 'block' : 'none';
+            document.getElementById('stats-info').style.display = 'none';
+            document.getElementById('settings-info').style.display = 'none';
         }
-        function showSettings() {
-            alert('設定功能暫未開放');
+        function toggleSettings() {
+            document.getElementById('settings-info').style.display =
+                document.getElementById('settings-info').style.display === 'none' ? 'block' : 'none';
+            document.getElementById('stats-info').style.display = 'none';
+            document.getElementById('other-info').style.display = 'none';
         }
 
         // ===== 輸入偵測區 =====
