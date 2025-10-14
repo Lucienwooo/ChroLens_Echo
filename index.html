@@ -151,17 +151,23 @@
         </div>
         <!-- ===== 輸出區 ===== -->
         <div class="output-group">
-            <div class="output-box" id="output-tw-box">
+            <!-- ===== 繁體中文輸出框 ===== -->
+            <div class="output-box" id="output-tw-box" style="display:none;">
                 <div class="output-title" id="output-tw-title">TW</div>
                 <div id="output-tw"></div>
+                <button class="copy-btn" onclick="copyOutput('output-tw')" style="position:absolute;right:8px;bottom:8px;padding:2px 10px;font-size:0.95em;">複製</button>
             </div>
-            <div class="output-box" id="output-ja-box">
+            <!-- ===== 日文輸出框 ===== -->
+            <div class="output-box" id="output-ja-box" style="display:none;">
                 <div class="output-title" id="output-ja-title">JP</div>
                 <div id="output-ja"></div>
+                <button class="copy-btn" onclick="copyOutput('output-ja')" style="position:absolute;right:8px;bottom:8px;padding:2px 10px;font-size:0.95em;">複製</button>
             </div>
-            <div class="output-box" id="output-en-box">
+            <!-- ===== 英文輸出框 ===== -->
+            <div class="output-box" id="output-en-box" style="display:none;">
                 <div class="output-title" id="output-en-title">EN</div>
                 <div id="output-en"></div>
+                <button class="copy-btn" onclick="copyOutput('output-en')" style="position:absolute;right:8px;bottom:8px;padding:2px 10px;font-size:0.95em;">複製</button>
             </div>
         </div>
         <!-- ===== 狀態訊息區 ===== -->
@@ -193,9 +199,7 @@
             </div>
             <!-- 統計資訊視窗，預設隱藏 -->
             <div id="stats-info" style="display:none;border-radius:6px;padding:8px 8px 6px 8px;margin-bottom:8px;">
-                <strong>統計資訊</strong><br>
-                今日翻譯次數：<span id="translate-count">0</span><br>
-                今日訪問次數（不重複IP）：<span id="visit-count">0</span>
+                <strong>其他功能暫未開放</strong>
             </div>
             <!-- 其它視窗，預設隱藏 -->
             <div id="other-info" style="display:none;border-radius:6px;padding:8px 8px 6px 8px;margin-bottom:8px;">
@@ -448,7 +452,7 @@
                 document.getElementById(firstId).checked = false;
             }
 
-            // 顯示/隱藏輸出框
+            // 只顯示勾選的輸出框
             document.getElementById('output-ja-box').style.display = boxes[0].checked ? 'block' : 'none';
             document.getElementById('output-en-box').style.display = boxes[1].checked ? 'block' : 'none';
             document.getElementById('output-tw-box').style.display = boxes[2].checked ? 'block' : 'none';
@@ -477,16 +481,37 @@
         // 頁面載入時自動翻譯一次
         // 頁面載入時統計訪問
         window.onload = function() {
-            // 統計訪問次數（僅本機，不重複IP僅限本地測試）
-            const key = getTodayKey();
-            if (!localStorage.getItem('visitCount_' + key)) {
-                incVisitCount();
-            } else {
-                loadStats();
-            }
-            translateMulti();
+            // 先更新輸出框顯示（確保預設勾選的框會顯示）
             updateOutputVisibility();
+            // 再執行翻譯
+            translateMulti();
         };
+
+        // ===== 輸出框複製功能 =====
+        function copyOutput(outputId) {
+            const text = document.getElementById(outputId).innerText;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    // 可選：顯示提示
+                    document.getElementById('status-message').innerText = "已複製到剪貼簿";
+                    setTimeout(() => {
+                        document.getElementById('status-message').innerText = "";
+                    }, 1200);
+                });
+            } else {
+                // 備用方案
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                document.getElementById('status-message').innerText = "已複製到剪貼簿";
+                setTimeout(() => {
+                    document.getElementById('status-message').innerText = "";
+                }, 1200);
+            }
+        }
     </script>
 </body>
 </html>
