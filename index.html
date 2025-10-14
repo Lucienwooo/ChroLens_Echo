@@ -155,19 +155,54 @@
             <div class="output-box" id="output-tw-box" style="display:none;">
                 <div class="output-title" id="output-tw-title">TW</div>
                 <div id="output-tw"></div>
-                <button class="copy-btn" onclick="copyOutput('output-tw')" style="position:absolute;right:8px;bottom:8px;padding:2px 10px;font-size:0.95em;">複製</button>
+                <!-- 複製SVG按鈕（放大1.5倍） -->
+                <button class="copy-btn" onclick="copyOutput('output-tw')" style="position:absolute;right:8px;bottom:8px;padding:2px 10px;font-size:0.95em;background:none;border:none;">
+                    <svg width="33" height="33" viewBox="0 0 24 24" fill="none">
+                        <rect x="9" y="9" width="10" height="10" rx="2" stroke="#555" stroke-width="2"/>
+                        <rect x="5" y="5" width="10" height="10" rx="2" stroke="#555" stroke-width="2" opacity="0.5"/>
+                    </svg>
+                </button>
+                <!-- 語音SVG按鈕（放大1.5倍） -->
+                <button class="speak-btn" onclick="speakOutput('output-tw', 'zh-TW')" style="position:absolute;right:54px;bottom:8px;padding:2px 10px;font-size:0.95em;background:none;border:none;">
+                    <svg width="33" height="33" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 9v6h4l5 5V4l-5 5H5z" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M19 9v6" stroke="#555" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
             </div>
             <!-- ===== 日文輸出框 ===== -->
             <div class="output-box" id="output-ja-box" style="display:none;">
                 <div class="output-title" id="output-ja-title">JP</div>
                 <div id="output-ja"></div>
-                <button class="copy-btn" onclick="copyOutput('output-ja')" style="position:absolute;right:8px;bottom:8px;padding:2px 10px;font-size:0.95em;">複製</button>
+                <button class="copy-btn" onclick="copyOutput('output-ja')" style="position:absolute;right:8px;bottom:8px;padding:2px 10px;font-size:0.95em;background:none;border:none;">
+                    <svg width="33" height="33" viewBox="0 0 24 24" fill="none">
+                        <rect x="9" y="9" width="10" height="10" rx="2" stroke="#555" stroke-width="2"/>
+                        <rect x="5" y="5" width="10" height="10" rx="2" stroke="#555" stroke-width="2" opacity="0.5"/>
+                    </svg>
+                </button>
+                <button class="speak-btn" onclick="speakOutput('output-ja', 'ja-JP')" style="position:absolute;right:54px;bottom:8px;padding:2px 10px;font-size:0.95em;background:none;border:none;">
+                    <svg width="33" height="33" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 9v6h4l5 5V4l-5 5H5z" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M19 9v6" stroke="#555" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
             </div>
             <!-- ===== 英文輸出框 ===== -->
             <div class="output-box" id="output-en-box" style="display:none;">
                 <div class="output-title" id="output-en-title">EN</div>
                 <div id="output-en"></div>
-                <button class="copy-btn" onclick="copyOutput('output-en')" style="position:absolute;right:8px;bottom:8px;padding:2px 10px;font-size:0.95em;">複製</button>
+                <button class="copy-btn" onclick="copyOutput('output-en')" style="position:absolute;right:8px;bottom:8px;padding:2px 10px;font-size:0.95em;background:none;border:none;">
+                    <svg width="33" height="33" viewBox="0 0 24 24" fill="none">
+                        <rect x="9" y="9" width="10" height="10" rx="2" stroke="#555" stroke-width="2"/>
+                        <rect x="5" y="5" width="10" height="10" rx="2" stroke="#555" stroke-width="2" opacity="0.5"/>
+                    </svg>
+                </button>
+                <button class="speak-btn" onclick="speakOutput('output-en', 'en-US')" style="position:absolute;right:54px;bottom:8px;padding:2px 10px;font-size:0.95em;background:none;border:none;">
+                    <svg width="33" height="33" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 9v6h4l5 5V4l-5 5H5z" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M19 9v6" stroke="#555" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
             </div>
         </div>
         <!-- ===== 狀態訊息區 ===== -->
@@ -226,30 +261,6 @@
         // ===== 統計資料 =====
         let translateCount = 0;
         let visitCount = 0;
-        // 嘗試從 localStorage 取得今日資料
-        function getTodayKey() {
-            const today = new Date();
-            return today.getFullYear() + '-' + (today.getMonth()+1) + '-' + today.getDate();
-        }
-        function loadStats() {
-            const key = getTodayKey();
-            translateCount = parseInt(localStorage.getItem('translateCount_' + key) || '0');
-            visitCount = parseInt(localStorage.getItem('visitCount_' + key) || '0');
-            document.getElementById('translate-count').innerText = translateCount;
-            document.getElementById('visit-count').innerText = visitCount;
-        }
-        function incTranslateCount() {
-            const key = getTodayKey();
-            translateCount++;
-            localStorage.setItem('translateCount_' + key, translateCount);
-            document.getElementById('translate-count').innerText = translateCount;
-        }
-        function incVisitCount() {
-            const key = getTodayKey();
-            visitCount++;
-            localStorage.setItem('visitCount_' + key, visitCount);
-            document.getElementById('visit-count').innerText = visitCount;
-        }
         // ===== 按鈕功能區 =====
         function toggleStats() {
             document.getElementById('stats-info').style.display =
@@ -295,7 +306,21 @@
             window.open(googleTranslateUrl, '_blank');
         }
 
-        // ===== 單一翻譯處理區 =====
+        // ===== Google翻譯API（非官方） =====
+        async function googleTranslateAPI(text, sourceLang, targetLang) {
+            // 使用 Google Translate 的 HTTP 介面（非官方）
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                // 取出翻譯結果
+                return data[0].map(item => item[0]).join('');
+            } catch (e) {
+                return "Google翻譯失敗";
+            }
+        }
+
+        // ===== 單一翻譯處理區（修正版） =====
         async function translateSingle(text, sourceLang, targetLang, outputId) {
             let attempts = 0;
             let success = false;
@@ -340,15 +365,17 @@
                     incTranslateCount();
                     return;
                 } catch (e) {
-                    // DeepL失敗則進入Google翻譯網頁
+                    // DeepL失敗則進入Google翻譯API
                 }
             }
 
-            // Google翻譯網頁
-            document.getElementById(outputId).innerText = "❌ 額度用盡或連線失敗，自動開啟 Google 翻譯。";
+            // Google翻譯API（直接顯示結果，不開網頁）
+            const googleResult = await googleTranslateAPI(text, sourceLang, targetLang);
+            const endTime = performance.now();
+            const elapsed = ((endTime - startTime) / 1000).toFixed(2);
+            document.getElementById(outputId).innerText = googleResult;
             document.getElementById('status-message').innerText =
-                "❌ 額度用盡或連線失敗 (當前使用 Google 翻譯網頁)";
-            openGoogleTranslateFallback(text, sourceLang, targetLang);
+                `花費 ${elapsed} 秒，✅翻譯成功 (當前使用 Google Translate API)`;
             incTranslateCount();
         }
 
@@ -511,6 +538,16 @@
                     document.getElementById('status-message').innerText = "";
                 }, 1200);
             }
+        }
+
+        // ===== 語音合成功能 =====
+        function speakOutput(outputId, lang) {
+            const text = document.getElementById(outputId).innerText;
+            if (!text) return;
+            const utter = new window.SpeechSynthesisUtterance(text);
+            utter.lang = lang;
+            window.speechSynthesis.cancel(); // 停止前一次朗讀
+            window.speechSynthesis.speak(utter);
         }
     </script>
 </body>
