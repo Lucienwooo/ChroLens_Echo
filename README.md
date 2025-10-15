@@ -1,5 +1,5 @@
-![ChroLens_Mimic](./pic/clm2.4.png)</br>
-[網頁傳送門](https://lucienwooo.github.io/ChroLens_Echo/)</br>
+![ChroLens_Echo](./pic/clm2.4.png)</br>
+[ChroLens_Echo](https://lucienwooo.github.io/ChroLens_Echo/)</br>
 ## 功能介紹：</br>
 簡單的翻譯中文/日文/英文的單字句子，網頁無廣告</br>
 </br>
