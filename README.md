@@ -1,4 +1,4 @@
-![ChroLens_Echo](./pic/clm2.4.png)</br>
+![ChroLens_Echo](./pic/cle.png)</br>
 
 [ChroLens_Echo](https://lucienwooo.github.io/ChroLens_Echo/)</br>
 
