@@ -286,18 +286,40 @@
             if (timer) clearTimeout(timer);
             timer = setTimeout(() => {
                 const text = document.getElementById('input-text').value.trim();
+                // 只有當內容有變化且超過1.5秒沒動靜才翻譯
                 if (text !== "" && text !== lastInput) {
                     translateMulti();
                 }
-            }, 500); // 0.5秒沒動靜就翻譯
+            }, 1500); // 1.5秒沒動靜才翻譯
         }
 
-        // ===== 語言偵測區 =====
-        function detectLang(text) {
-            // 有日文假名就判定日文，有英文字母就判定英文，否則預設中文
-            if (/[\u3040-\u30ff]/.test(text)) return "ja";
-            if (/[a-zA-Z]/.test(text)) return "en";
-            return "zh-tw";
+        // ===== 語言偵測區（直接用 auto） =====
+        function getSourceLang() {
+            return "auto";
+        }
+
+        // ===== 多語翻譯區（修正版） =====
+        async function translateMulti() {
+            const text = document.getElementById('input-text').value.trim();
+            if (text === "" || text === lastInput) return;
+            lastInput = text;
+            document.getElementById('status-message').innerText = "";
+
+            // 取得勾選狀態
+            const tw = document.getElementById('chk-tw').checked;
+            const ja = document.getElementById('chk-ja').checked;
+            const en = document.getElementById('chk-en').checked;
+
+            // 輸出框標題固定
+            document.getElementById('output-tw-title').innerText = "TW";
+            document.getElementById('output-ja-title').innerText = "JP";
+            document.getElementById('output-en-title').innerText = "EN";
+
+            // 只翻譯勾選的語言
+            const sourceLang = getSourceLang();
+            if (tw) translateSingle(text, sourceLang, "zh-TW", "output-tw");
+            if (ja) translateSingle(text, sourceLang, "ja", "output-ja");
+            if (en) translateSingle(text, sourceLang, "en", "output-en");
         }
 
         // ===== Google翻譯備援區 =====
@@ -320,112 +342,82 @@
             }
         }
 
-        // ===== 單一翻譯處理區（修正版） =====
+        // ===== fetch 加入超時機制 =====
+        function fetchWithTimeout(url, options = {}, timeout = 2000) {
+            return Promise.race([
+                fetch(url, options),
+                new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), timeout))
+            ]);
+        }
+
+        // ===== 單一翻譯處理區（API順序：DeepL > Google API > Google Script API） =====
         async function translateSingle(text, sourceLang, targetLang, outputId) {
+            const startTime = performance.now();
+            document.getElementById(outputId).innerText = "翻譯中...";
+
+            // 1. DeepL API
+            try {
+                const deeplResult = await Promise.race([
+                    translateWithDeepL(text, sourceLang, targetLang),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 2000))
+                ]);
+                const endTime = performance.now();
+                const elapsed = ((endTime - startTime) / 1000).toFixed(2);
+                document.getElementById(outputId).innerText = deeplResult;
+                document.getElementById('status-message').innerText =
+                    `花費 ${elapsed} 秒，✅翻譯成功 (DeepL API)`;
+                incTranslateCount();
+                return;
+            } catch (e) {
+                // DeepL失敗則進入Google翻譯API
+            }
+
+            // 2. Google Translate API（非官方）
+            try {
+                const googleResult = await Promise.race([
+                    googleTranslateAPI(text, sourceLang, targetLang),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 2000))
+                ]);
+                const endTime = performance.now();
+                const elapsed = ((endTime - startTime) / 1000).toFixed(2);
+                document.getElementById(outputId).innerText = googleResult;
+                document.getElementById('status-message').innerText =
+                    `花費 ${elapsed} 秒，✅翻譯成功 (Google Translate API)`;
+                incTranslateCount();
+                return;
+            } catch (e) {
+                // Google API失敗則進入Google Script API
+            }
+
+            // 3. Google Apps Script API（輪詢所有API_URLS）
             let attempts = 0;
             let success = false;
             const maxAttempts = API_URLS.length;
-            const startTime = performance.now();
             let apiIndex = currentApiIndex;
-
-            document.getElementById(outputId).innerText = "翻譯中...";
-
-            // Google Apps Script API
             while (attempts < maxAttempts && !success) {
                 const apiUrl = API_URLS[apiIndex];
                 const url = `${apiUrl}?text=${encodeURIComponent(text)}&source=${sourceLang}&target=${targetLang}`;
                 try {
-                    const response = await fetch(url);
+                    const response = await fetchWithTimeout(url, {}, 2000); // 最多等2秒
                     const data = await response.json();
                     if (data.status === 'success') {
                         const endTime = performance.now();
                         const elapsed = ((endTime - startTime) / 1000).toFixed(2);
                         document.getElementById(outputId).innerText = data.translatedText;
                         document.getElementById('status-message').innerText =
-                            `花費 ${elapsed} 秒，✅翻譯成功 (當前使用 Google Script API)`;
+                            `花費 ${elapsed} 秒，✅翻譯成功 (Google Script API)`;
                         success = true;
                         currentApiIndex = (apiIndex + 1) % API_URLS.length;
                         incTranslateCount();
                         return;
                     }
-                } catch (e) {}
+                } catch (e) {
+                    // 超時或錯誤直接嘗試下一個
+                }
                 apiIndex = (apiIndex + 1) % API_URLS.length;
                 attempts++;
             }
 
-            // DeepL API
-            if (!success) {
-                try {
-                    const deeplResult = await translateWithDeepL(text, sourceLang, targetLang);
-                    const endTime = performance.now();
-                    const elapsed = ((endTime - startTime) / 1000).toFixed(2);
-                    document.getElementById(outputId).innerText = deeplResult;
-                    document.getElementById('status-message').innerText =
-                        `花費 ${elapsed} 秒，✅翻譯成功 (當前使用 DeepL API)`;
-                    incTranslateCount();
-                    return;
-                } catch (e) {
-                    // DeepL失敗則進入Google翻譯API
-                }
-            }
-
-            // Google翻譯API（直接顯示結果，不開網頁）
-            const googleResult = await googleTranslateAPI(text, sourceLang, targetLang);
-            const endTime = performance.now();
-            const elapsed = ((endTime - startTime) / 1000).toFixed(2);
-            document.getElementById(outputId).innerText = googleResult;
-            document.getElementById('status-message').innerText =
-                `花費 ${elapsed} 秒，✅翻譯成功 (當前使用 Google Translate API)`;
-            incTranslateCount();
-        }
-
-        // ===== 多語翻譯區 =====
-        async function translateMulti() {
-            const text = document.getElementById('input-text').value.trim();
-            if (text === "" || text === lastInput) return;
-            lastInput = text;
-            document.getElementById('status-message').innerText = "";
-
-            const lang = detectLang(text);
-
-            // 取得勾選狀態
-            const tw = document.getElementById('chk-tw').checked;
-            const ja = document.getElementById('chk-ja').checked;
-            const en = document.getElementById('chk-en').checked;
-
-            // 輸出框標題固定
-            document.getElementById('output-tw-title').innerText = "TW";
-            document.getElementById('output-ja-title').innerText = "JP";
-            document.getElementById('output-en-title').innerText = "EN";
-
-            // 根據輸入語言與勾選狀態決定翻譯目標
-            // 輸入中文時，翻譯成日文/英文
-            if (lang === "zh-tw") {
-                if (ja) translateSingle(text, "zh-tw", "ja", "output-ja");
-                if (en) translateSingle(text, "zh-tw", "en", "output-en");
-                // 中文不翻譯成中文
-                if (tw) document.getElementById('output-tw').innerText = "（請輸入日文或英文才會翻譯成繁體中文）";
-            }
-            // 輸入日文時，翻譯成繁體中文/英文
-            else if (lang === "ja") {
-                if (tw) translateSingle(text, "ja", "zh-tw", "output-tw");
-                if (en) translateSingle(text, "ja", "en", "output-en");
-                // 日文不翻譯成日文
-                if (ja) document.getElementById('output-ja').innerText = "（請輸入中文或英文才會翻譯成日文）";
-            }
-            // 輸入英文時，翻譯成繁體中文/日文
-            else if (lang === "en") {
-                if (tw) translateSingle(text, "en", "zh-tw", "output-tw");
-                if (ja) translateSingle(text, "en", "ja", "output-ja");
-                // 英文不翻譯成英文
-                if (en) document.getElementById('output-en').innerText = "（請輸入中文或日文才會翻譯成英文）";
-            }
-            // 其它語言，預設翻譯成日文/英文
-            else {
-                if (ja) translateSingle(text, lang, "ja", "output-ja");
-                if (en) translateSingle(text, lang, "en", "output-en");
-                if (tw) document.getElementById('output-tw').innerText = "（請輸入日文或英文才會翻譯成繁體中文）";
-            }
         }
 
         // ===== DeepL API區 =====
@@ -446,43 +438,41 @@
             return data.translations[0].text;
         }
 
-        // ===== 輸出語言勾選框控制區 =====
+        // ===== 輸出語言勾選框控制區（只翻譯新勾選的輸出框） =====
         function updateOutputVisibility() {
             const boxes = [
                 document.getElementById('chk-ja'),
                 document.getElementById('chk-en'),
                 document.getElementById('chk-tw')
             ];
+            const outputIds = ['output-ja', 'output-en', 'output-tw'];
+            const boxDivs = ['output-ja-box', 'output-en-box', 'output-tw-box'];
 
-            // 記錄勾選順序
-            if (!window.checkedOrder) window.checkedOrder = [];
-            // 先清理 checkedOrder 中已取消勾選的項目
-            window.checkedOrder = window.checkedOrder.filter(id => document.getElementById(id).checked);
+            // 記錄上一次勾選狀態
+            if (!window.lastChecked) window.lastChecked = [false, false, false];
 
-            // 檢查目前操作
-            for (let box of boxes) {
-                if (box.checked && !window.checkedOrder.includes(box.id)) {
-                    window.checkedOrder.push(box.id);
+            // 只顯示勾選的輸出框
+            for (let i = 0; i < boxes.length; i++) {
+                document.getElementById(boxDivs[i]).style.display = boxes[i].checked ? 'block' : 'none';
+            }
+
+            // 只翻譯新勾選的語言
+            const text = document.getElementById('input-text').value.trim();
+            if (text !== "") {
+                for (let i = 0; i < boxes.length; i++) {
+                    if (boxes[i].checked && !window.lastChecked[i]) {
+                        // 新勾選才翻譯
+                        let lang;
+                        if (i === 0) lang = "ja";
+                        if (i === 1) lang = "en";
+                        if (i === 2) lang = "zh-TW";
+                        translateSingle(text, getSourceLang(), lang, outputIds[i]);
+                    }
                 }
             }
 
-            // 最少要選1個
-            const checkedCount = window.checkedOrder.length;
-            if (checkedCount === 0) {
-                boxes[0].checked = true; // 預設日本語
-                window.checkedOrder = [boxes[0].id];
-            }
-            // 最多只能選2個
-            if (checkedCount > 2) {
-                // 取消最早勾選的那一個
-                const firstId = window.checkedOrder.shift();
-                document.getElementById(firstId).checked = false;
-            }
-
-            // 只顯示勾選的輸出框
-            document.getElementById('output-ja-box').style.display = boxes[0].checked ? 'block' : 'none';
-            document.getElementById('output-en-box').style.display = boxes[1].checked ? 'block' : 'none';
-            document.getElementById('output-tw-box').style.display = boxes[2].checked ? 'block' : 'none';
+            // 更新勾選狀態
+            window.lastChecked = boxes.map(box => box.checked);
         }
 
         // ===== 主題切換區 =====
