@@ -37,6 +37,14 @@
             margin-bottom: 8px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.03);
             position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .output-box:hover {
+            background: #ededf0;
+        }
+        body.dark .output-box:hover {
+            background: #2a2c32;
         }
         .output-title {
             font-weight: bold;
@@ -126,6 +134,92 @@
         body.dark .theme-toggle .sun {
             opacity: 0;
         }
+        /* ===== 語言下拉選單樣式 ===== */
+        select {
+            padding: 4px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            font-size: 0.95em;
+            cursor: pointer;
+            margin-left: 16px;
+        }
+        body.dark select {
+            background: #23252b;
+            color: #e2e2e2;
+            border-color: #444;
+        }
+        select:hover {
+            border-color: #999;
+        }
+        /* ===== 複製歷史記錄區樣式 ===== */
+        #copy-history-container {
+            margin-top: 12px;
+            display: none;
+        }
+        #copy-history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .history-item {
+            background: #f7f7fa;
+            border-radius: 6px;
+            padding: 8px 8px 6px 8px;
+            min-height: 32px;
+            white-space: pre-wrap;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            cursor: pointer;
+            transition: background 0.2s;
+            position: relative;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .history-item:hover {
+            background: #ededf0;
+        }
+        body.dark .history-item {
+            background: #23252b;
+            color: #e2e2e2;
+        }
+        body.dark .history-item:hover {
+            background: #2a2c32;
+        }
+        .history-item-meta {
+            font-size: 0.85em;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        body.dark .history-item-meta {
+            color: #999;
+        }
+        /* ===== 語音播放按鈕樣式 ===== */
+        .speak-btn {
+            position: absolute;
+            top: 6px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .speak-btn:hover {
+            background: rgba(0,0,0,0.1);
+        }
+        body.dark .speak-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .history-item {
+            position: relative;
+        }
+        .history-item .speak-btn {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -148,20 +242,46 @@
                 <input type="checkbox" id="chk-tw" onchange="updateOutputVisibility()">
                 繁體中文
             </label>
+            <select id="extra-lang-select" onchange="handleExtraLangChange()">
+                <option value="">[Language]</option>
+                <option value="ko">Korean (한국어)</option>
+                <option value="fr">French (Français)</option>
+                <option value="de">German (Deutsch)</option>
+                <option value="es">Spanish (Español)</option>
+                <option value="it">Italian (Italiano)</option>
+                <option value="pt">Portuguese (Português)</option>
+                <option value="ru">Russian (Русский)</option>
+                <option value="ar">Arabic (العربية)</option>
+                <option value="th">Thai (ไทย)</option>
+                <option value="vi">Vietnamese (Tiếng Việt)</option>
+                <option value="id">Indonesian (Bahasa Indonesia)</option>
+                <option value="nl">Dutch (Nederlands)</option>
+                <option value="pl">Polish (Polski)</option>
+                <option value="tr">Turkish (Türkçe)</option>
+                <option value="hi">Hindi (हिन्दी)</option>
+            </select>
         </div>
         <!-- ===== 輸出區 ===== -->
         <div class="output-group">
-            <div class="output-box" id="output-tw-box">
+            <div class="output-box" id="output-tw-box" onclick="copyToClipboard('output-tw')" title="點擊複製">
                 <div class="output-title" id="output-tw-title">TW</div>
+                <button class="speak-btn" onclick="event.stopPropagation(); speakText(document.getElementById('output-tw').innerText, 'zh-TW');" title="播放語音">🔊</button>
                 <div id="output-tw"></div>
             </div>
-            <div class="output-box" id="output-ja-box">
+            <div class="output-box" id="output-ja-box" onclick="copyToClipboard('output-ja')" title="點擊複製">
                 <div class="output-title" id="output-ja-title">JP</div>
+                <button class="speak-btn" onclick="event.stopPropagation(); speakText(document.getElementById('output-ja').innerText, 'ja-JP');" title="播放語音">🔊</button>
                 <div id="output-ja"></div>
             </div>
-            <div class="output-box" id="output-en-box">
+            <div class="output-box" id="output-en-box" onclick="copyToClipboard('output-en')" title="點擊複製">
                 <div class="output-title" id="output-en-title">EN</div>
+                <button class="speak-btn" onclick="event.stopPropagation(); speakText(document.getElementById('output-en').innerText, 'en-US');" title="播放語音">🔊</button>
                 <div id="output-en"></div>
+            </div>
+            <div class="output-box" id="output-extra-box" style="display:none;" onclick="copyToClipboard('output-extra')" title="點擊複製">
+                <div class="output-title" id="output-extra-title">EXTRA</div>
+                <button class="speak-btn" onclick="event.stopPropagation(); speakText(document.getElementById('output-extra').innerText);" title="播放語音">🔊</button>
+                <div id="output-extra"></div>
             </div>
         </div>
         <!-- ===== 狀態訊息區 ===== -->
@@ -191,11 +311,9 @@
                     <img src="umi_去背.ico" alt="關於" style="width:60px;height:32px;object-fit:contain;border-radius:6px;vertical-align:middle;">
                 </a>
             </div>
-            <!-- 統計資訊視窗，預設隱藏 -->
+            <!-- 統計資訊視窗,預設隱藏 -->
             <div id="stats-info" style="display:none;border-radius:6px;padding:8px 8px 6px 8px;margin-bottom:8px;">
-                <strong>統計資訊</strong><br>
-                今日翻譯次數：<span id="translate-count">0</span><br>
-                今日訪問次數（不重複IP）：<span id="visit-count">0</span>
+                <strong>統計功能暫未開放</strong>
             </div>
             <!-- 其它視窗，預設隱藏 -->
             <div id="other-info" style="display:none;border-radius:6px;padding:8px 8px 6px 8px;margin-bottom:8px;">
@@ -204,6 +322,14 @@
             <!-- 設定視窗，預設隱藏 -->
             <div id="settings-info" style="display:none;border-radius:6px;padding:8px 8px 6px 8px;margin-bottom:8px;">
                 <strong>設定功能暫未開放</strong>
+            </div>
+            <!-- ===== 複製歷史記錄區 ===== -->
+            <div id="copy-history-container">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <strong>紀錄</strong>
+                    <button onclick="clearCopyHistory()" style="font-size:0.85em;padding:2px 8px;">清空</button>
+                </div>
+                <div id="copy-history-list"></div>
             </div>
         </div>
     </div>
@@ -219,6 +345,17 @@
         let currentApiIndex = 0;
         let timer = null;
         let lastInput = "";
+        // ===== 額外語言設定 =====
+        let currentExtraLang = null;
+        const langNames = {
+            'ko': 'KO', 'fr': 'FR', 'de': 'DE', 'es': 'ES', 
+            'it': 'IT', 'pt': 'PT', 'ru': 'RU', 'ar': 'AR',
+            'th': 'TH', 'vi': 'VI', 'id': 'ID', 'nl': 'NL',
+            'pl': 'PL', 'tr': 'TR', 'hi': 'HI'
+        };
+        // ===== 複製歷史記錄 =====
+        let copyHistory = [];
+        const MAX_HISTORY = 10;
         // ===== 統計資料 =====
         let translateCount = 0;
         let visitCount = 0;
@@ -266,12 +403,264 @@
             document.getElementById('other-info').style.display = 'none';
         }
 
+        // ===== 額外語言處理區 =====
+        function handleExtraLangChange() {
+            const select = document.getElementById('extra-lang-select');
+            const langCode = select.value;
+            
+            if (langCode) {
+                currentExtraLang = langCode;
+                document.getElementById('output-extra-box').style.display = 'block';
+                document.getElementById('output-extra-title').innerText = langNames[langCode];
+                
+                // 自動翻譯
+                const text = document.getElementById('input-text').value.trim();
+                if (text !== "") {
+                    translateMulti();
+                }
+            } else {
+                currentExtraLang = null;
+                document.getElementById('output-extra-box').style.display = 'none';
+                document.getElementById('output-extra').innerText = '';
+            }
+        }
+
+        // ===== 複製功能區 =====
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            if (!text || text.includes('翻譯中') || text.includes('輸入') || text.includes('❌')) {
+                return; // 不複製提示文字
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                const statusMsg = document.getElementById('status-message');
+                const originalMsg = statusMsg.innerText;
+                statusMsg.innerText = '✅ 已複製到剪貼簿';
+                setTimeout(() => {
+                    statusMsg.innerText = originalMsg;
+                }, 2000);
+                
+                // 獲取原文
+                const sourceText = document.getElementById('input-text').value.trim();
+                
+                // 添加到複製歷史(同時保存原文和譯文)
+                addToCopyHistory(text, sourceText);
+            }).catch(err => {
+                console.error('複製失敗:', err);
+            });
+        }
+
+        // ===== 複製歷史管理區 =====
+        function addToCopyHistory(translatedText, sourceText) {
+            // 組合格式: "譯文_原文"
+            const combinedText = `${translatedText}_${sourceText}`;
+            
+            // 檢查是否已存在(只比對譯文部分)
+            const existingIndex = copyHistory.findIndex(item => item.text === translatedText);
+            
+            if (existingIndex !== -1) {
+                // 已存在，增加複製次數
+                copyHistory[existingIndex].count++;
+                copyHistory[existingIndex].timestamp = Date.now();
+                copyHistory[existingIndex].source = sourceText; // 更新原文
+            } else {
+                // 新項目
+                copyHistory.push({
+                    text: translatedText,
+                    source: sourceText,
+                    count: 1,
+                    timestamp: Date.now()
+                });
+            }
+            
+            // 按複製次數排序，次數相同則按時間排序
+            copyHistory.sort((a, b) => {
+                if (b.count === a.count) {
+                    return b.timestamp - a.timestamp;
+                }
+                return b.count - a.count;
+            });
+            
+            // 限制最多10個
+            if (copyHistory.length > MAX_HISTORY) {
+                copyHistory = copyHistory.slice(0, MAX_HISTORY);
+            }
+            
+            // 儲存到 localStorage
+            localStorage.setItem('copyHistory', JSON.stringify(copyHistory));
+            
+            // 更新顯示
+            renderCopyHistory();
+        }
+
+        function renderCopyHistory() {
+            const container = document.getElementById('copy-history-list');
+            const historyContainer = document.getElementById('copy-history-container');
+            
+            if (copyHistory.length === 0) {
+                historyContainer.style.display = 'none';
+                return;
+            }
+            
+            historyContainer.style.display = 'block';
+            container.innerHTML = '';
+            
+            copyHistory.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.onclick = () => copyHistoryItem(item.text);
+                div.title = '點擊複製 | 右鍵播放語音';
+                
+                const meta = document.createElement('div');
+                meta.className = 'history-item-meta';
+                meta.textContent = `複製 ${item.count} 次 | ${formatTimestamp(item.timestamp)}`;
+                
+                const content = document.createElement('div');
+                // 組合格式: "譯文_原文"
+                const combinedText = item.source ? `${item.text}_${item.source}` : item.text;
+                // 限制顯示長度
+                const displayText = combinedText.length > 100 ? 
+                    combinedText.substring(0, 100) + '...' : combinedText;
+                content.textContent = displayText;
+                
+                // 添加語音播放功能
+                const speakBtn = document.createElement('button');
+                speakBtn.innerHTML = '🔊';
+                speakBtn.className = 'speak-btn';
+                speakBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    speakText(item.text);
+                };
+                speakBtn.title = '播放語音';
+                
+                div.appendChild(meta);
+                div.appendChild(content);
+                div.appendChild(speakBtn);
+                container.appendChild(div);
+            });
+        }
+
+        function copyHistoryItem(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const statusMsg = document.getElementById('status-message');
+                const originalMsg = statusMsg.innerText;
+                statusMsg.innerText = '✅ 已從歷史複製到剪貼簿';
+                setTimeout(() => {
+                    statusMsg.innerText = originalMsg;
+                }, 2000);
+                
+                // 更新複製次數
+                addToCopyHistory(text);
+            }).catch(err => {
+                console.error('複製失敗:', err);
+            });
+        }
+
+        function clearCopyHistory() {
+            if (confirm('確定要清空所有複製紀錄嗎？')) {
+                copyHistory = [];
+                localStorage.removeItem('copyHistory');
+                renderCopyHistory();
+            }
+        }
+
+        function loadCopyHistory() {
+            const saved = localStorage.getItem('copyHistory');
+            if (saved) {
+                try {
+                    copyHistory = JSON.parse(saved);
+                    renderCopyHistory();
+                } catch (e) {
+                    console.error('載入複製歷史失敗:', e);
+                    copyHistory = [];
+                }
+            }
+        }
+
+        // ===== 語音播放功能 =====
+        function speakText(text, lang = 'auto') {
+            // 檢查文字是否有效
+            if (!text || text.includes('翻譯中') || text.includes('輸入') || text.includes('❌') || text.includes('（')) {
+                return;
+            }
+            
+            // 檢查瀏覽器是否支援語音合成
+            if (!('speechSynthesis' in window)) {
+                alert('您的瀏覽器不支援語音播放功能');
+                return;
+            }
+            
+            // 停止當前播放
+            window.speechSynthesis.cancel();
+            
+            // 創建語音實例
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            // 設定語言
+            if (lang === 'auto') {
+                // 自動偵測語言
+                lang = detectLangForSpeech(text);
+            }
+            utterance.lang = lang;
+            
+            // 設定語音參數
+            utterance.rate = 0.9; // 語速 (0.1 - 10)
+            utterance.pitch = 1; // 音調 (0 - 2)
+            utterance.volume = 1; // 音量 (0 - 1)
+            
+            // 錯誤處理
+            utterance.onerror = function(event) {
+                console.error('語音播放錯誤:', event);
+            };
+            
+            // 播放語音
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function detectLangForSpeech(text) {
+            const hasHiragana = /[\u3040-\u309f]/.test(text);
+            const hasKatakana = /[\u30a0-\u30ff]/.test(text);
+            const hasKanji = /[\u4e00-\u9faf]/.test(text);
+            const hasEnglish = /[a-zA-Z]/.test(text);
+            
+            if (hasHiragana || hasKatakana) return "ja-JP";
+            
+            const englishCount = (text.match(/[a-zA-Z]/g) || []).length;
+            const totalChars = text.replace(/\s/g, '').length;
+            if (englishCount > totalChars * 0.5) return "en-US";
+            
+            if (hasKanji) return "zh-TW";
+            if (hasEnglish) return "en-US";
+            
+            return "zh-TW";
+        }
+
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            // 小於1分鐘
+            if (diff < 60000) {
+                return '剛剛';
+            }
+            // 小於1小時
+            if (diff < 3600000) {
+                return Math.floor(diff / 60000) + '分鐘前';
+            }
+            // 小於24小時
+            if (diff < 86400000) {
+                return Math.floor(diff / 3600000) + '小時前';
+            }
+            // 超過24小時顯示日期
+            return date.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+
         // ===== 輸入偵測區 =====
         function autoTranslate() {
             if (timer) clearTimeout(timer);
             timer = setTimeout(() => {
                 const text = document.getElementById('input-text').value.trim();
-                if (text !== "" && text !== lastInput) {
+                if (text !== "") {
                     translateMulti();
                 }
             }, 500); // 0.5秒沒動靜就翻譯
@@ -279,9 +668,27 @@
 
         // ===== 語言偵測區 =====
         function detectLang(text) {
-            // 有日文假名就判定日文，有英文字母就判定英文，否則預設中文
-            if (/[\u3040-\u30ff]/.test(text)) return "ja";
-            if (/[a-zA-Z]/.test(text)) return "en";
+            // 計算各類字符的比例
+            const hasHiragana = /[\u3040-\u309f]/.test(text);
+            const hasKatakana = /[\u30a0-\u30ff]/.test(text);
+            const hasKanji = /[\u4e00-\u9faf]/.test(text);
+            const hasEnglish = /[a-zA-Z]/.test(text);
+            
+            // 日文特徵：有假名
+            if (hasHiragana || hasKatakana) return "ja";
+            
+            // 英文特徵：英文字母佔多數
+            const englishCount = (text.match(/[a-zA-Z]/g) || []).length;
+            const totalChars = text.replace(/\s/g, '').length;
+            if (englishCount > totalChars * 0.5) return "en";
+            
+            // 有漢字但沒有假名，預設為中文
+            if (hasKanji) return "zh-tw";
+            
+            // 其他情況判斷為英文
+            if (hasEnglish) return "en";
+            
+            // 預設中文
             return "zh-tw";
         }
 
@@ -306,9 +713,14 @@
                 const apiUrl = API_URLS[apiIndex];
                 const url = `${apiUrl}?text=${encodeURIComponent(text)}&source=${sourceLang}&target=${targetLang}`;
                 try {
-                    const response = await fetch(url);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超時
+                    
+                    const response = await fetch(url, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    
                     const data = await response.json();
-                    if (data.status === 'success') {
+                    if (data.status === 'success' && data.translatedText) {
                         const endTime = performance.now();
                         const elapsed = ((endTime - startTime) / 1000).toFixed(2);
                         document.getElementById(outputId).innerText = data.translatedText;
@@ -319,7 +731,9 @@
                         incTranslateCount();
                         return;
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.warn(`API ${apiIndex + 1} 失敗:`, e.message);
+                }
                 apiIndex = (apiIndex + 1) % API_URLS.length;
                 attempts++;
             }
@@ -328,15 +742,17 @@
             if (!success) {
                 try {
                     const deeplResult = await translateWithDeepL(text, sourceLang, targetLang);
-                    const endTime = performance.now();
-                    const elapsed = ((endTime - startTime) / 1000).toFixed(2);
-                    document.getElementById(outputId).innerText = deeplResult;
-                    document.getElementById('status-message').innerText =
-                        `花費 ${elapsed} 秒，✅翻譯成功 (當前使用 DeepL API)`;
-                    incTranslateCount();
-                    return;
+                    if (deeplResult) {
+                        const endTime = performance.now();
+                        const elapsed = ((endTime - startTime) / 1000).toFixed(2);
+                        document.getElementById(outputId).innerText = deeplResult;
+                        document.getElementById('status-message').innerText =
+                            `花費 ${elapsed} 秒，✅翻譯成功 (當前使用 DeepL API)`;
+                        incTranslateCount();
+                        return;
+                    }
                 } catch (e) {
-                    // DeepL失敗則進入Google翻譯網頁
+                    console.warn('DeepL API 失敗:', e.message);
                 }
             }
 
@@ -351,7 +767,18 @@
         // ===== 多語翻譯區 =====
         async function translateMulti() {
             const text = document.getElementById('input-text').value.trim();
-            if (text === "" || text === lastInput) return;
+            if (text === "") {
+                // 清空所有輸出框
+                document.getElementById('output-tw').innerText = "";
+                document.getElementById('output-ja').innerText = "";
+                document.getElementById('output-en').innerText = "";
+                document.getElementById('output-extra').innerText = "";
+                document.getElementById('status-message').innerText = "";
+                lastInput = "";
+                return;
+            }
+            
+            // 即使文字相同也要重新翻譯,因為語言選項可能改變
             lastInput = text;
             document.getElementById('status-message').innerText = "";
 
@@ -367,33 +794,40 @@
             document.getElementById('output-ja-title').innerText = "JP";
             document.getElementById('output-en-title').innerText = "EN";
 
+            // 清空未勾選的輸出框
+            if (!tw) document.getElementById('output-tw').innerText = "";
+            if (!ja) document.getElementById('output-ja').innerText = "";
+            if (!en) document.getElementById('output-en').innerText = "";
+
             // 根據輸入語言與勾選狀態決定翻譯目標
             // 輸入中文時，翻譯成日文/英文
             if (lang === "zh-tw") {
+                if (tw) document.getElementById('output-tw').innerText = "（輸入日文或英文才會翻譯成繁體中文）";
                 if (ja) translateSingle(text, "zh-tw", "ja", "output-ja");
                 if (en) translateSingle(text, "zh-tw", "en", "output-en");
-                // 中文不翻譯成中文
-                if (tw) document.getElementById('output-tw').innerText = "（請輸入日文或英文才會翻譯成繁體中文）";
             }
             // 輸入日文時，翻譯成繁體中文/英文
             else if (lang === "ja") {
                 if (tw) translateSingle(text, "ja", "zh-tw", "output-tw");
+                if (ja) document.getElementById('output-ja').innerText = "（輸入中文或英文才會翻譯成日文）";
                 if (en) translateSingle(text, "ja", "en", "output-en");
-                // 日文不翻譯成日文
-                if (ja) document.getElementById('output-ja').innerText = "（請輸入中文或英文才會翻譯成日文）";
             }
             // 輸入英文時，翻譯成繁體中文/日文
             else if (lang === "en") {
                 if (tw) translateSingle(text, "en", "zh-tw", "output-tw");
                 if (ja) translateSingle(text, "en", "ja", "output-ja");
-                // 英文不翻譯成英文
-                if (en) document.getElementById('output-en').innerText = "（請輸入中文或日文才會翻譯成英文）";
+                if (en) document.getElementById('output-en').innerText = "（輸入中文或日文才會翻譯成英文）";
             }
             // 其它語言，預設翻譯成日文/英文
             else {
+                if (tw) document.getElementById('output-tw').innerText = "（輸入日文或英文才會翻譯成繁體中文）";
                 if (ja) translateSingle(text, lang, "ja", "output-ja");
                 if (en) translateSingle(text, lang, "en", "output-en");
-                if (tw) document.getElementById('output-tw').innerText = "（請輸入日文或英文才會翻譯成繁體中文）";
+            }
+            
+            // 處理額外語言
+            if (currentExtraLang) {
+                translateSingle(text, lang, currentExtraLang, "output-extra");
             }
         }
 
@@ -401,18 +835,41 @@
         async function translateWithDeepL(text, sourceLang, targetLang) {
             const apiKey = "078b54f1-0f39-47e0-9276-04a7335c4696:fx";
             const url = `https://api-free.deepl.com/v2/translate`;
+            
+            // DeepL 語言代碼轉換
+            let deeplSource = sourceLang.toUpperCase();
+            let deeplTarget = targetLang.toUpperCase();
+            
+            // 處理中文繁體代碼
+            if (sourceLang === 'zh-tw') deeplSource = 'ZH';
+            if (targetLang === 'zh-tw') deeplTarget = 'ZH-HANT';
+            
             const params = new URLSearchParams({
                 auth_key: apiKey,
                 text: text,
-                source_lang: sourceLang.toUpperCase(),
-                target_lang: targetLang.toUpperCase()
+                source_lang: deeplSource,
+                target_lang: deeplTarget
             });
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            
             const response = await fetch(url, {
                 method: "POST",
-                body: params
+                body: params,
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+                throw new Error(`DeepL API error: ${response.status}`);
+            }
+            
             const data = await response.json();
-            return data.translations[0].text;
+            if (data.translations && data.translations.length > 0) {
+                return data.translations[0].text;
+            }
+            throw new Error('No translation returned');
         }
 
         // ===== 輸出語言勾選框控制區 =====
@@ -435,13 +892,8 @@
                 }
             }
 
-            // 最少要選1個
-            const checkedCount = window.checkedOrder.length;
-            if (checkedCount === 0) {
-                boxes[0].checked = true; // 預設日本語
-                window.checkedOrder = [boxes[0].id];
-            }
             // 最多只能選2個
+            const checkedCount = window.checkedOrder.length;
             if (checkedCount > 2) {
                 // 取消最早勾選的那一個
                 const firstId = window.checkedOrder.shift();
@@ -452,6 +904,14 @@
             document.getElementById('output-ja-box').style.display = boxes[0].checked ? 'block' : 'none';
             document.getElementById('output-en-box').style.display = boxes[1].checked ? 'block' : 'none';
             document.getElementById('output-tw-box').style.display = boxes[2].checked ? 'block' : 'none';
+
+            // 如果有勾選,重新觸發翻譯以更新顯示的語言
+            if (checkedCount > 0) {
+                const text = document.getElementById('input-text').value.trim();
+                if (text !== "") {
+                    translateMulti();
+                }
+            }
         }
 
         // ===== 主題切換區 =====
@@ -484,6 +944,8 @@
             } else {
                 loadStats();
             }
+            // 載入複製歷史
+            loadCopyHistory();
             translateMulti();
             updateOutputVisibility();
         };

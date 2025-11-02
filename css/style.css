@@ -1,0 +1,248 @@
+/* ===== ChroLens_Echo 樣式表 ===== */
+
+/* ===== 字型設定 ===== */
+@font-face {
+    font-family: 'LINESeedTW';
+    src: url('./LINE Seed TW_ver02/TTF/LINESeedTW_TTF_Rg.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* ===== 主體排版 ===== */
+body {
+    font-family: 'LINESeedTW', 'Microsoft JhengHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 12px; 
+    max-width: 600px; 
+    margin: auto; 
+    background-color: #f4f4f4;
+}
+
+h1 { 
+    text-align: center; 
+    color: #333; 
+    margin-bottom: 12px; 
+    font-size: 1.4em;
+}
+
+.container { 
+    background-color: white; 
+    padding: 12px; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.06); 
+}
+
+/* ===== 輸入框區 ===== */
+textarea {
+    width: 100%; 
+    height: 90px; 
+    padding: 6px; 
+    margin-bottom: 8px;
+    box-sizing: border-box; 
+    border: 1px solid #ccc; 
+    border-radius: 4px; 
+    resize: vertical;
+    font-size: 1em;
+}
+
+/* ===== 輸出框區 ===== */
+.output-group { 
+    display: block; 
+    margin-top: 8px; 
+}
+
+.output-box {
+    background: #f7f7fa;
+    border-radius: 6px;
+    padding: 8px 8px 6px 8px;
+    min-height: 32px;
+    white-space: pre-wrap;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.output-box:hover {
+    background: #ededf0;
+}
+
+.output-title {
+    font-weight: bold;
+    font-size: 0.98em;
+    color: #555;
+    margin-bottom: 0px;
+    position: absolute;
+    top: 6px;
+    left: 10px;
+    background: #f7f7fa;
+    padding: 0 4px;
+    border-radius: 3px;
+}
+
+.output-box > div:not(.output-title) {
+    margin-top: 22px;
+    font-size: 1em;
+}
+
+#status-message {
+    color: #d33;
+    margin-top: 6px;
+    font-size: 0.95em;
+    text-align: right;
+}
+
+/* ===== 語言下拉選單樣式 ===== */
+select {
+    padding: 4px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: white;
+    font-size: 0.95em;
+    cursor: pointer;
+    margin-left: 16px;
+}
+
+select:hover {
+    border-color: #999;
+}
+
+/* ===== 複製歷史記錄區樣式 ===== */
+#copy-history-container {
+    margin-top: 12px;
+    display: none;
+}
+
+#copy-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.history-item {
+    background: #f7f7fa;
+    border-radius: 6px;
+    padding: 8px 8px 6px 8px;
+    min-height: 32px;
+    white-space: pre-wrap;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    cursor: pointer;
+    transition: background 0.2s;
+    position: relative;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.history-item:hover {
+    background: #ededf0;
+}
+
+.history-item-meta {
+    font-size: 0.85em;
+    color: #888;
+    margin-bottom: 4px;
+}
+
+/* ===== 深色主題 ===== */
+body.dark {
+    background-color: #181a20;
+    color: #e2e2e2;
+}
+
+body.dark .container {
+    background-color: #23252b;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+
+body.dark textarea {
+    background: #23252b;
+    color: #e2e2e2;
+    border-color: #444;
+}
+
+body.dark .output-box {
+    background: #23252b;
+    color: #e2e2e2;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+
+body.dark .output-box:hover {
+    background: #2a2c32;
+}
+
+body.dark .output-title {
+    background: #23252b;
+    color: #e2e2e2;
+}
+
+body.dark #stats-info,
+body.dark #other-info,
+body.dark #settings-info {
+    background: #23252b;
+    color: #e2e2e2;
+}
+
+body.dark button {
+    background: #23252b;
+    color: #e2e2e2;
+    border: 1px solid #444;
+}
+
+body.dark #status-message {
+    color: #ffb3b3;
+}
+
+body.dark select {
+    background: #23252b;
+    color: #e2e2e2;
+    border-color: #444;
+}
+
+body.dark .history-item {
+    background: #23252b;
+    color: #e2e2e2;
+}
+
+body.dark .history-item:hover {
+    background: #2a2c32;
+}
+
+body.dark .history-item-meta {
+    color: #999;
+}
+
+/* ===== 配色切換器 ===== */
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    margin-left: 10px;
+    vertical-align: middle;
+    user-select: none;
+}
+
+.theme-toggle svg {
+    width: 24px;
+    height: 24px;
+    transition: opacity 0.2s;
+}
+
+.theme-toggle .sun {
+    opacity: 0;
+}
+
+body.light .theme-toggle .sun {
+    opacity: 1;
+}
+
+body.light .theme-toggle .moon {
+    opacity: 0;
+}
+
+body.dark .theme-toggle .moon {
+    opacity: 1;
+}
+
+body.dark .theme-toggle .sun {
+    opacity: 0;
+}

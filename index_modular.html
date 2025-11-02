@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="umi_去背.ico">
+    <title>無廣告翻譯</title>
+    <!-- 載入樣式表 -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- ===== 標題區 ===== -->
+    <h1>繁體中文、日本語、English</h1>
+    <div class="container">
+        <!-- ===== 輸入區 ===== -->
+        <textarea id="input-text" placeholder="請輸入要翻譯的內容..." oninput="autoTranslate()"></textarea>
+        
+        <!-- ===== 輸出語言選擇區 ===== -->
+        <div id="output-lang-select" style="margin-bottom:8px;">
+            <label style="margin-left:16px;">
+                <input type="checkbox" id="chk-ja" checked onchange="updateOutputVisibility()">
+                日本語
+            </label>
+            <label style="margin-left:16px;">
+                <input type="checkbox" id="chk-en" onchange="updateOutputVisibility()">
+                English
+            </label>
+            <label>
+                <input type="checkbox" id="chk-tw" onchange="updateOutputVisibility()">
+                繁體中文
+            </label>
+            <select id="extra-lang-select" onchange="handleExtraLangChange()">
+                <option value="">[Language]</option>
+                <option value="ko">Korean (한국어)</option>
+                <option value="fr">French (Français)</option>
+                <option value="de">German (Deutsch)</option>
+                <option value="es">Spanish (Español)</option>
+                <option value="it">Italian (Italiano)</option>
+                <option value="pt">Portuguese (Português)</option>
+                <option value="ru">Russian (Русский)</option>
+                <option value="ar">Arabic (العربية)</option>
+                <option value="th">Thai (ไทย)</option>
+                <option value="vi">Vietnamese (Tiếng Việt)</option>
+                <option value="id">Indonesian (Bahasa Indonesia)</option>
+                <option value="nl">Dutch (Nederlands)</option>
+                <option value="pl">Polish (Polski)</option>
+                <option value="tr">Turkish (Türkçe)</option>
+                <option value="hi">Hindi (हिन्दी)</option>
+            </select>
+        </div>
+        
+        <!-- ===== 輸出區 ===== -->
+        <div class="output-group">
+            <div class="output-box" id="output-tw-box" onclick="copyToClipboard('output-tw')" title="點擊複製">
+                <div class="output-title" id="output-tw-title">TW</div>
+                <div id="output-tw"></div>
+            </div>
+            <div class="output-box" id="output-ja-box" onclick="copyToClipboard('output-ja')" title="點擊複製">
+                <div class="output-title" id="output-ja-title">JP</div>
+                <div id="output-ja"></div>
+            </div>
+            <div class="output-box" id="output-en-box" onclick="copyToClipboard('output-en')" title="點擊複製">
+                <div class="output-title" id="output-en-title">EN</div>
+                <div id="output-en"></div>
+            </div>
+            <div class="output-box" id="output-extra-box" style="display:none;" onclick="copyToClipboard('output-extra')" title="點擊複製">
+                <div class="output-title" id="output-extra-title">EXTRA</div>
+                <div id="output-extra"></div>
+            </div>
+        </div>
+        
+        <!-- ===== 狀態訊息區 ===== -->
+        <p id="status-message"></p>
+        
+        <!-- ===== 統計資訊與按鈕區 ===== -->
+        <div id="stats-section" style="margin-top:16px;">
+            <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;">
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button onclick="toggleStats()">統計資訊</button>
+                    <button onclick="toggleOther()">其他</button>
+                    <button onclick="toggleSettings()">設定</button>
+                    <!-- ===== 配色切換器 ===== -->
+                    <span class="theme-toggle" onclick="toggleTheme()" title="切換配色">
+                        <!-- 月亮 SVG（深色） -->
+                        <svg class="moon" viewBox="0 0 24 24" fill="none">
+                            <path d="M21 12.79A9 9 0 0 1 12.21 3a7 7 0 1 0 8.79 9.79Z" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <!-- 太陽 SVG（淺色） -->
+                        <svg class="sun" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="5" stroke="#FFD700" stroke-width="2"/>
+                            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <!-- 關於按鈕，靠右顯示 -->
+                <a href="https://linktr.ee/lucienwooo" target="_blank" style="text-decoration:none;">
+                    <img src="umi_去背.ico" alt="關於" style="width:60px;height:32px;object-fit:contain;border-radius:6px;vertical-align:middle;">
+                </a>
+            </div>
+            
+            <!-- 統計資訊視窗，預設隱藏 -->
+            <div id="stats-info" style="display:none;border-radius:6px;padding:8px 8px 6px 8px;margin-bottom:8px;">
+                <strong>統計資訊</strong><br>
+                今日翻譯次數：<span id="translate-count">0</span><br>
+                今日訪問次數（本地記錄）：<span id="visit-count">0</span><br>
+                <small style="color:#888;">
+                    💡 提示: 要追蹤真實訪問數據,建議整合 Google Analytics<br>
+                    請參考「統計功能與AI翻譯說明.md」文件
+                </small>
+            </div>
+            
+            <!-- 其它視窗，預設隱藏 -->
+            <div id="other-info" style="display:none;border-radius:6px;padding:8px 8px 6px 8px;margin-bottom:8px;">
+                <strong>其他功能暫未開放</strong>
+            </div>
+            
+            <!-- 設定視窗，預設隱藏 -->
+            <div id="settings-info" style="display:none;border-radius:6px;padding:8px 8px 6px 8px;margin-bottom:8px;">
+                <strong>設定功能暫未開放</strong>
+            </div>
+            
+            <!-- ===== 複製歷史記錄區 ===== -->
+            <div id="copy-history-container">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <strong>紀錄</strong>
+                    <button onclick="clearCopyHistory()" style="font-size:0.85em;padding:2px 8px;">清空</button>
+                </div>
+                <div id="copy-history-list"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 載入 JavaScript 模組 -->
+    <script src="js/translate.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/init.js"></script>
+</body>
+</html>
