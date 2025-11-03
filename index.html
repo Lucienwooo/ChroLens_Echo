@@ -429,9 +429,9 @@
                 document.getElementById('output-extra-box').style.display = 'block';
                 document.getElementById('output-extra-title').innerText = langNames[langCode];
                 
-                // 自動翻譯
+                // 自動翻譯（只有當輸入內容與上次不同時）
                 const text = document.getElementById('input-text').value.trim();
-                if (text !== "") {
+                if (text !== "" && text !== lastInput) {
                     translateMulti();
                 }
             } else {
@@ -700,14 +700,16 @@
         async function googleTranslateAPI(text, sourceLang, targetLang) {
             // 使用 Google Translate 的 HTTP 介面（非官方）
             const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                // 取出翻譯結果
-                return data[0].map(item => item[0]).join('');
-            } catch (e) {
-                return "Google翻譯失敗";
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+            const data = await response.json();
+            if (!data || !data[0] || data[0].length === 0) {
+                throw new Error('Invalid translation response');
+            }
+            // 取出翻譯結果
+            return data[0].map(item => item[0]).join('');
         }
 
         // ===== fetch 加入超時機制 =====
@@ -737,7 +739,7 @@
                 incTranslateCount();
                 return;
             } catch (e) {
-                // DeepL失敗則進入Google翻譯API
+                console.log("DeepL API 失敗:", e.message);
             }
 
             // 2. Google Translate API（非官方）
@@ -754,7 +756,7 @@
                 incTranslateCount();
                 return;
             } catch (e) {
-                // Google API失敗則進入Google Script API
+                console.log("Google Translate API 失敗:", e.message);
             }
 
             // 3. Google Apps Script API（輪詢所有API_URLS）
@@ -766,7 +768,7 @@
                 const apiUrl = API_URLS[apiIndex];
                 const url = `${apiUrl}?text=${encodeURIComponent(text)}&source=${sourceLang}&target=${targetLang}`;
                 try {
-                    const response = await fetch(url);
+                    const response = await fetchWithTimeout(url, {}, 5000); // 增加到5秒
                     const data = await response.json();
                     if (data.status === 'success' && data.translatedText) {
                         const endTime = performance.now();
@@ -779,12 +781,14 @@
                         incTranslateCount();
                         return;
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.log(`Google Script API ${apiIndex + 1} 失敗:`, e.message);
+                }
                 apiIndex = (apiIndex + 1) % API_URLS.length;
                 attempts++;
             }
 
-            // DeepL API
+            // 4. 最後備援：DeepL API
             if (!success) {
                 try {
                     const deeplResult = await translateWithDeepL(text, sourceLang, targetLang);
@@ -796,16 +800,31 @@
                     incTranslateCount();
                     return;
                 } catch (e) {
-                    // DeepL失敗則進入Google翻譯網頁
+                    console.error("DeepL API 失敗:", e);
                 }
             }
 
-            // Google翻譯網頁
-            document.getElementById(outputId).innerText = "❌ 額度用盡或連線失敗，自動開啟 Google 翻譯。";
+            // 5. 最終備援：再次嘗試 Google Translate API（增加超時時間）
+            try {
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+                const response = await fetchWithTimeout(url, {}, 10000); // 增加到10秒超時
+                const data = await response.json();
+                const translated = data[0].map(item => item[0]).join('');
+                const endTime = performance.now();
+                const elapsed = ((endTime - startTime) / 1000).toFixed(2);
+                document.getElementById(outputId).innerText = translated;
+                document.getElementById('status-message').innerText =
+                    `花費 ${elapsed} 秒，✅翻譯成功 (當前使用 Google Translate API 備援)`;
+                incTranslateCount();
+                return;
+            } catch (e) {
+                console.error("Google Translate API 備援失敗:", e);
+            }
+
+            // 所有方法都失敗
+            document.getElementById(outputId).innerText = "❌ 所有翻譯服務均無法使用，請稍後再試。";
             document.getElementById('status-message').innerText =
-                "❌ 額度用盡或連線失敗 (當前使用 Google 翻譯網頁)";
-            openGoogleTranslateFallback(text, sourceLang, targetLang);
-            incTranslateCount();
+                "❌ 所有翻譯服務均無法使用 (DeepL、Google API、Google Script 皆失敗)";
         }
 
         // ===== 多語翻譯區 =====
@@ -905,23 +924,25 @@
                 document.getElementById('chk-en'),
                 document.getElementById('chk-tw')
             ];
-            const outputIds = ['output-ja', 'output-en', 'output-tw'];
             const boxDivs = ['output-ja-box', 'output-en-box', 'output-tw-box'];
 
-            // 記錄上一次勾選狀態
-            if (!window.lastChecked) window.lastChecked = [false, false, false];
-
-            // 只顯示勾選的輸出框
-            for (let i = 0; i < boxes.length; i++) {
-                document.getElementById(boxDivs[i]).style.display = boxes[i].checked ? 'block' : 'none';
+            // 初始化 checkedOrder
+            if (!window.checkedOrder) {
+                window.checkedOrder = [];
+                for (let i = 0; i < boxes.length; i++) {
+                    if (boxes[i].checked) {
+                        window.checkedOrder.push(boxes[i].id);
+                    }
+                }
             }
 
             // 最少要選1個
-            const checkedCount = window.checkedOrder.length;
+            let checkedCount = boxes.filter(box => box.checked).length;
             if (checkedCount === 0) {
                 boxes[0].checked = true; // 預設日本語
-                window.checkedOrder = [boxes[0].id];
+                window.checkedOrder = ['chk-ja'];
             }
+            
             // 最多只能選2個
             if (checkedCount > 2) {
                 // 取消最早勾選的那一個
@@ -929,7 +950,7 @@
                 document.getElementById(firstId).checked = false;
             }
 
-            // 顯示/隱藏輸出框
+            // 顯示/隱藏輸出框（根據勾選狀態）
             document.getElementById('output-ja-box').style.display = boxes[0].checked ? 'block' : 'none';
             document.getElementById('output-en-box').style.display = boxes[1].checked ? 'block' : 'none';
             document.getElementById('output-tw-box').style.display = boxes[2].checked ? 'block' : 'none';
@@ -958,6 +979,9 @@
         // 頁面載入時自動翻譯一次
         // 頁面載入時統計訪問
         window.onload = function() {
+            // 先設定輸出框顯示狀態
+            updateOutputVisibility();
+            
             // 統計訪問次數（僅本機，不重複IP僅限本地測試）
             const key = getTodayKey();
             if (!localStorage.getItem('visitCount_' + key)) {
@@ -965,10 +989,9 @@
             } else {
                 loadStats();
             }
-            translateMulti();
-            updateOutputVisibility();
-            // 再執行翻譯
-            translateMulti();
+            
+            // 載入複製歷史
+            loadCopyHistory();
         };
 
         // ===== 輸出框複製功能 =====
